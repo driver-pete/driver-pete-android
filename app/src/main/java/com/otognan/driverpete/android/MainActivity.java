@@ -26,7 +26,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.io.FileOutputStream;
-import com.otognan.cogo.Compress;
+import com.otognan.driverpete.android.Compress;
 
 
 public class MainActivity extends Activity implements
