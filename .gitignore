@@ -15,7 +15,6 @@ gen/
 # Gradle files
 .gradle/
 build/
-/*/build/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -25,3 +24,35 @@ proguard/
 
 # Log Files
 *.log
+
+/.idea/workspace.xml
+/.idea/libraries
+.DS_Store
+
+*.pyc
+
+# Packages
+*.egg
+*.egg-info
+.installed.cfg
+pytest-xdist*.tar.gz
+.project
+.pydevproject
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+#Translations
+*.mo
+
+#Mr Developer
+.mr.developer.cfg
+.env
+venv
+.cache
+
+testresults.xml
