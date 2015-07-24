@@ -127,7 +127,7 @@ public class MainActivity extends Activity implements
 
 
         try {
-            startActivity(Intent.createChooser(i, "Send zip mail..."));
+            startActivityForResult(Intent.createChooser(i, "Send zip mail..."), 0);
         } catch (android.content.ActivityNotFoundException ex) {
             Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
         }
