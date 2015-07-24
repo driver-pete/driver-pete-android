@@ -12,9 +12,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
+import android.net.http.SslError;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -92,6 +97,17 @@ public class MainActivity extends Activity implements
 
         this.screenLog("Connecting to google api..");
         mGoogleApiClient.connect();
+
+        WebView myWebView = (WebView) findViewById(R.id.loginWebView);
+        myWebView.setWebViewClient(new WebViewClient() {
+            public void onReceivedSslError(WebView view, SslErrorHandler handler,
+                                           SslError error) {
+                handler.proceed();
+            }
+        });
+        WebSettings webSettings = myWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        myWebView.loadUrl("https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com/");
     }
 
     public void sendZipMessage(View view) {
