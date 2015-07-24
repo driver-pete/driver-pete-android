@@ -10,4 +10,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
     public ApplicationTest() {
         super(Application.class);
     }
+
+    public void testDummy() throws Exception {
+        assertTrue(true);
+    }
 }

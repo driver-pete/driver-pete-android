@@ -26,6 +26,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.io.FileOutputStream;
+import java.util.Locale;
+
 import com.otognan.driverpete.android.Compress;
 
 
@@ -63,7 +65,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onLocationChanged(Location location) {
         String message = String.format("%s %f %f\n",
-                new SimpleDateFormat("HH:mm:ss").format(new Date()),
+                new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date()),
                 location.getLatitude(),
                 location.getLongitude());
         this.data.add(message);
