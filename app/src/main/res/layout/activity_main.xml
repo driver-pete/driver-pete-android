@@ -10,32 +10,28 @@
         android:layout_height="wrap_content"
         android:text="Send zip"
         android:id="@+id/test_button"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
         android:onClick="sendZipMessage"
-        android:layout_alignParentTop="true" />
+        android:layout_marginLeft="250dp"
+        android:layout_marginTop="350dp" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Send text 2"
+        android:text="Send text"
         android:id="@+id/send_text_button"
         android:onClick="sendTextMessage"
-        android:layout_below="@+id/test_button"
-        android:layout_alignRight="@+id/test_button"
-        android:layout_alignEnd="@+id/test_button"
-        android:layout_toRightOf="@+id/textView"
-        android:layout_toEndOf="@+id/textView" />
+        android:layout_marginTop="400dp"
+        android:layout_marginLeft="250dp" />
 
 
     <TextView
-        android:layout_width="match_parent"
+        android:layout_width="250dp"
         android:layout_height="match_parent"
         android:textSize="16sp"
         android:maxLines = "30"
         android:scrollbars = "vertical"
         android:id="@+id/textView"
-        android:layout_toLeftOf="@+id/test_button"
-        android:layout_toStartOf="@+id/test_button" />
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="350dp" />
 
 </RelativeLayout>
