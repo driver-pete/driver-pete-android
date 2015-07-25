@@ -7,23 +7,29 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.net.Uri;
 import android.net.http.SslError;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.View;
+import android.webkit.ClientCertRequest;
+import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -61,7 +67,6 @@ public class MainActivity extends Activity implements
 
     private List<String> data;
 
-
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         this.screenLog("GoogleApiClient connection has failed");
@@ -76,7 +81,6 @@ public class MainActivity extends Activity implements
         this.data.add(message);
         this.screenLog(message);
     }
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,10 +108,44 @@ public class MainActivity extends Activity implements
                                            SslError error) {
                 handler.proceed();
             }
+
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            public WebResourceResponse shouldInterceptRequest(WebView view,
+                                                              WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                Log.v("WebClient", "URL LOAD: " + url);
+                return shouldInterceptRequest(view, url);
+            }
+
+            public void onReceivedError(WebView view, int errorCode,
+                                        String description, String failingUrl) {
+                Log.v("WebClient", "Error: " + description);
+            }
+
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            public void onReceivedClientCertRequest(WebView view, ClientCertRequest request) {
+                Log.v("WebClient", "Cancel request: " + request.getHost());
+                request.cancel();
+            }
+
+            public boolean shouldOverrideUrlLoading(WebView view, String url){
+                // do your handling codes here, which url is the requested url
+                // probably you need to open that url rather than redirect:
+                Log.v("WebClient", "shouldOverrideUrlLoading " + url);
+                return false; // then it is not handled by default action
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url){
+                String cookies = CookieManager.getInstance().getCookie(url);
+                Log.d("WebClient", url + ": cookies:" + cookies );
+            }
         });
+
         WebSettings webSettings = myWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        myWebView.loadUrl("https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com/");
+        webSettings.setJavaScriptEnabled(false);
+        //myWebView.loadUrl("https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com/");
+        myWebView.loadUrl("https://192.168.1.2:8443/auth/facebook");
     }
 
     public void sendZipMessage(View view) {
@@ -199,6 +237,5 @@ public class MainActivity extends Activity implements
     public void onConnectionSuspended(int i) {
         this.screenLog("GoogleApiClient connection has been suspend");
     }
-
 
 }
