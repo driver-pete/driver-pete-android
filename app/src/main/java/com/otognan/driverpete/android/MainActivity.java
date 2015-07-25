@@ -1,46 +1,30 @@
 package com.otognan.driverpete.android;
 
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.location.Location;
+import android.net.Uri;
+import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
-import android.annotation.TargetApi;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.location.Location;
-import android.net.Uri;
-import android.net.http.SslError;
-import android.os.Build;
-import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
-import android.view.View;
-import android.webkit.ClientCertRequest;
-import android.webkit.CookieManager;
-import android.webkit.SslErrorHandler;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebResourceResponse;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import java.net.HttpCookie;
-import java.net.URI;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.io.FileOutputStream;
 import java.util.Locale;
-
-import com.otognan.driverpete.android.Compress;
 
 
 public class MainActivity extends Activity implements
@@ -62,6 +46,9 @@ public class MainActivity extends Activity implements
     // A fast frequency ceiling in milliseconds
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
+
+
+    private static final int LOGIN_ACTIVITY_RESULT_ID = 1;
 
     // Define an object that holds accuracy and frequency parameters
     private GoogleApiClient mGoogleApiClient;
@@ -94,6 +81,9 @@ public class MainActivity extends Activity implements
         TextView textView = (TextView) findViewById(R.id.textView);
         textView.setMovementMethod(new ScrollingMovementMethod());
 
+        TextView loginStatusTextView = (TextView) findViewById(R.id.loginStatusTextView);
+        loginStatusTextView.setText("logged out..");
+
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
@@ -102,79 +92,13 @@ public class MainActivity extends Activity implements
 
         this.screenLog("Connecting to google api..");
         mGoogleApiClient.connect();
-
-        final String serverUrl = "https://192.168.1.2:8443";
-
-        WebView myWebView = (WebView) findViewById(R.id.loginWebView);
-
-        myWebView.setWebViewClient(new WebViewClient() {
-            public void onReceivedSslError(WebView view, SslErrorHandler handler,
-                                           SslError error) {
-                handler.proceed();
-            }
-
-//            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-//            public WebResourceResponse shouldInterceptRequest(WebView view,
-//                                                              WebResourceRequest request) {
-//                String url = request.getUrl().toString();
-//                Log.v("WebClient", "URL LOAD: " + url);
-//                return shouldInterceptRequest(view, url);
-//            }
-
-//            public void onReceivedError(WebView view, int errorCode,
-//                                        String description, String failingUrl) {
-//                Log.v("WebClient", "Error: " + description);
-//            }
-
-//            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-//            public void onReceivedClientCertRequest(WebView view, ClientCertRequest request) {
-//                Log.v("WebClient", "Cancel request: " + request.getHost());
-//                request.cancel();
-//            }
-
-//            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-//                // do your handling codes here, which url is the requested url
-//                // probably you need to open that url rather than redirect:
-//                Log.v("WebClient", "shouldOverrideUrlLoading " + url);
-//                return false; // then it is not handled by default action
-//            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                if (url.startsWith(serverUrl)) {
-                    String cookies_header = CookieManager.getInstance().getCookie(url);
-                    List<HttpCookie> cookies = HttpCookie.parse(cookies_header);
-                    for (HttpCookie cookie: cookies) {
-                        if (cookie.getName().equals("AUTH-TOKEN")){
-                            String token = cookie.getValue();
-                            Log.d("WebClient", "FOUND TOKEN:" + token);
-                            return;
-                        }
-                    }
-                    Log.d("WebClient", "NO TOKEN AFTER LOGIN");
-                }
-            }
-        });
-
-        WebSettings webSettings = myWebView.getSettings();
-        webSettings.setJavaScriptEnabled(false);
-
-        //myWebView.loadUrl("https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com/");
-
-        boolean logout = false;
-        if (logout) {
-            String token = "<TOKEN_FROM_DB>";
-            myWebView.loadUrl("https://www.facebook.com/logout.php?access_token=" + token + "&confirm=1&next=" + "https%3A%2F%2F192.168.1.2%3A8443%2Fauth%2Ffacebook");
-        } else {
-            myWebView.loadUrl(serverUrl + "/auth/facebook");
-        }
     }
 
     public void sendZipMessage(View view) {
 
         Intent i = new Intent(Intent.ACTION_SEND);
         i.setType("message/rfc822");
-        i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"otognan@gmail.com"});
+        i.putExtra(Intent.EXTRA_EMAIL, new String[]{"otognan@gmail.com"});
         i.putExtra(Intent.EXTRA_SUBJECT, "new Zip GPS");
         i.putExtra(Intent.EXTRA_TEXT, "");
 
@@ -252,7 +176,7 @@ public class MainActivity extends Activity implements
         // Set the fastest update interval to 1 second
         locationRequest.setFastestInterval(FASTEST_INTERVAL);
         LocationServices.FusedLocationApi.requestLocationUpdates(
-                    mGoogleApiClient, locationRequest, this);
+                mGoogleApiClient, locationRequest, this);
     }
 
     @Override
@@ -260,4 +184,31 @@ public class MainActivity extends Activity implements
         this.screenLog("GoogleApiClient connection has been suspend");
     }
 
+
+    public void logIn(View view) {
+        final String serverUrl = "https://192.168.1.2:8443";
+        //final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
+
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.putExtra("serverUrl", serverUrl);
+        this.startActivityForResult(intent, LOGIN_ACTIVITY_RESULT_ID);
+    }
+
+    public void logOut(View view) {
+        this.screenLog("Trying to log out..");
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == LOGIN_ACTIVITY_RESULT_ID) {
+            if(resultCode == RESULT_OK){
+                String token = data.getStringExtra("token");
+                Log.d(LOG_TAG, "Got token from login: " + token);
+            }
+
+            if (resultCode == RESULT_CANCELED) {
+                Log.d(LOG_TAG, "No result from login activity");
+            }
+        }
+    }
 }

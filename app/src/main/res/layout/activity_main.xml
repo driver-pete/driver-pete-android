@@ -11,8 +11,10 @@
         android:text="Send zip"
         android:id="@+id/test_button"
         android:onClick="sendZipMessage"
-        android:layout_marginLeft="250dp"
-        android:layout_marginTop="350dp" />
+        android:layout_alignBaseline="@+id/send_text_button"
+        android:layout_alignBottom="@+id/send_text_button"
+        android:layout_toRightOf="@+id/textView"
+        android:layout_toEndOf="@+id/textView" />
 
     <Button
         android:layout_width="wrap_content"
@@ -20,8 +22,10 @@
         android:text="Send text"
         android:id="@+id/send_text_button"
         android:onClick="sendTextMessage"
-        android:layout_marginTop="400dp"
-        android:layout_marginLeft="250dp" />
+        android:layout_alignParentBottom="true"
+        android:layout_alignLeft="@+id/test_button"
+        android:layout_alignStart="@+id/test_button"
+        android:layout_marginBottom="32dp" />
 
 
     <TextView
@@ -32,12 +36,44 @@
         android:scrollbars = "vertical"
         android:id="@+id/textView"
         android:layout_alignParentBottom="true"
-        android:layout_marginTop="350dp" />
+        android:layout_alignTop="@+id/send_text_button" />
 
     <WebView
         android:layout_width="match_parent"
-        android:layout_height="350dp"
+        android:layout_height="330dp"
         android:id="@+id/loginWebView"
-        android:clickable="false" />
+        android:clickable="false"
+        android:layout_above="@+id/test_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Log In"
+        android:id="@+id/loginButton"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:onClick="logIn" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Login status"
+        android:id="@+id/loginStatusTextView"
+        android:layout_alignTop="@+id/loginButton"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Log out"
+        android:id="@+id/logoutButton"
+        android:layout_alignTop="@+id/loginButton"
+        android:layout_toRightOf="@+id/loginButton"
+        android:layout_toEndOf="@+id/loginButton"
+        android:onClick="logOut" />
 
 </RelativeLayout>
