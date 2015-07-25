@@ -32,9 +32,9 @@ public class LoginActivity extends ActionBarActivity {
 
         final Activity parentActivity = this;
 
-        WebView myWebView = (WebView) findViewById(R.id.loginWebView);
+        WebView loginWebView = (WebView) findViewById(R.id.loginWebView);
 
-        myWebView.setWebViewClient(new WebViewClient() {
+        loginWebView.setWebViewClient(new WebViewClient() {
 
             // Accept private ssl certificates
             @Override
@@ -49,8 +49,8 @@ public class LoginActivity extends ActionBarActivity {
                     view.destroy();
                     String cookies_header = CookieManager.getInstance().getCookie(url);
                     List<HttpCookie> cookies = HttpCookie.parse(cookies_header);
-                    for (HttpCookie cookie: cookies) {
-                        if (cookie.getName().equals("AUTH-TOKEN")){
+                    for (HttpCookie cookie : cookies) {
+                        if (cookie.getName().equals("AUTH-TOKEN")) {
                             String token = cookie.getValue();
                             Log.d("WebClient", "FOUND TOKEN:" + token);
 
@@ -69,37 +69,23 @@ public class LoginActivity extends ActionBarActivity {
             }
         });
 
-        WebSettings webSettings = myWebView.getSettings();
+        WebSettings webSettings = loginWebView.getSettings();
         webSettings.setJavaScriptEnabled(false);
 
         boolean logout = false;
         if (logout) {
             String token = "<TOKEN_FROM_DB>";
-            myWebView.loadUrl("https://www.facebook.com/logout.php?access_token=" + token + "&confirm=1&next=" + "https%3A%2F%2F192.168.1.2%3A8443%2Fauth%2Ffacebook");
+            loginWebView.loadUrl("https://www.facebook.com/logout.php?access_token=" + token + "&confirm=1&next=" + "https%3A%2F%2F192.168.1.2%3A8443%2Fauth%2Ffacebook");
         } else {
-            myWebView.loadUrl(serverUrl + "/auth/facebook");
+            loginWebView.loadUrl(serverUrl + "/auth/facebook");
         }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_login, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    protected void onDestroy() {
+        Log.d(LOG_TAG, "Clearing login webview cache..");
+        WebView loginWebView = (WebView) findViewById(R.id.loginWebView);
+        loginWebView.clearCache(true);
+        super.onDestroy();
     }
 }

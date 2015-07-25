@@ -4,6 +4,7 @@ package com.otognan.driverpete.android;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -81,8 +82,7 @@ public class MainActivity extends Activity implements
         TextView textView = (TextView) findViewById(R.id.textView);
         textView.setMovementMethod(new ScrollingMovementMethod());
 
-        TextView loginStatusTextView = (TextView) findViewById(R.id.loginStatusTextView);
-        loginStatusTextView.setText("logged out..");
+        this.updateLoginStatus();
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
@@ -195,7 +195,11 @@ public class MainActivity extends Activity implements
     }
 
     public void logOut(View view) {
-        this.screenLog("Trying to log out..");
+        SharedPreferences settings = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.remove("token");
+        editor.commit();
+        updateLoginStatus();
     }
 
     @Override
@@ -203,12 +207,31 @@ public class MainActivity extends Activity implements
         if (requestCode == LOGIN_ACTIVITY_RESULT_ID) {
             if(resultCode == RESULT_OK){
                 String token = data.getStringExtra("token");
-                Log.d(LOG_TAG, "Got token from login: " + token);
+                SharedPreferences settings = this.getPreferences(Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString("token", token);
+                editor.commit();
             }
 
             if (resultCode == RESULT_CANCELED) {
                 Log.d(LOG_TAG, "No result from login activity");
             }
+
+            updateLoginStatus();
+        }
+    }
+
+    private String getCurrentToken() {
+        SharedPreferences settings = this.getPreferences(Context.MODE_PRIVATE);
+        return settings.getString("token", null);
+    }
+
+    private void updateLoginStatus() {
+        TextView loginStatusTextView = (TextView) findViewById(R.id.loginStatusTextView);
+        if (this.getCurrentToken() != null) {
+            loginStatusTextView.setText("logged in.");
+        } else {
+            loginStatusTextView.setText("logged out.");
         }
     }
 }
