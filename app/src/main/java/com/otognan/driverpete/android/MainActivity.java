@@ -227,11 +227,15 @@ public class MainActivity extends Activity implements
     }
 
     private void updateLoginStatus() {
-        TextView loginStatusTextView = (TextView) findViewById(R.id.loginStatusTextView);
-        if (this.getCurrentToken() != null) {
-            loginStatusTextView.setText("logged in.");
+        boolean loggedIn = this.getCurrentToken() != null;
+        if (loggedIn) {
+            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in.");
+            findViewById(R.id.loginButton).setVisibility(View.INVISIBLE);
+            findViewById(R.id.logoutButton).setVisibility(View.VISIBLE);
         } else {
-            loginStatusTextView.setText("logged out.");
+            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged out.");
+            findViewById(R.id.loginButton).setVisibility(View.VISIBLE);
+            findViewById(R.id.logoutButton).setVisibility(View.INVISIBLE);
         }
     }
 }

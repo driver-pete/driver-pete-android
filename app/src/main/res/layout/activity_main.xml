@@ -38,15 +38,6 @@
         android:layout_alignParentBottom="true"
         android:layout_alignTop="@+id/send_text_button" />
 
-    <WebView
-        android:layout_width="match_parent"
-        android:layout_height="330dp"
-        android:id="@+id/loginWebView"
-        android:clickable="false"
-        android:layout_above="@+id/test_button"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -71,9 +62,9 @@
         android:layout_height="wrap_content"
         android:text="Log out"
         android:id="@+id/logoutButton"
-        android:layout_alignTop="@+id/loginButton"
-        android:layout_toRightOf="@+id/loginButton"
-        android:layout_toEndOf="@+id/loginButton"
-        android:onClick="logOut" />
+        android:onClick="logOut"
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/loginButton"
+        android:layout_alignStart="@+id/loginButton" />
 
 </RelativeLayout>
