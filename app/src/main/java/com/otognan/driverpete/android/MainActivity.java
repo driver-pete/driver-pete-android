@@ -30,6 +30,7 @@ import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.net.HttpCookie;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -102,50 +103,71 @@ public class MainActivity extends Activity implements
         this.screenLog("Connecting to google api..");
         mGoogleApiClient.connect();
 
+        final String serverUrl = "https://192.168.1.2:8443";
+
         WebView myWebView = (WebView) findViewById(R.id.loginWebView);
+
         myWebView.setWebViewClient(new WebViewClient() {
             public void onReceivedSslError(WebView view, SslErrorHandler handler,
                                            SslError error) {
                 handler.proceed();
             }
 
-            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-            public WebResourceResponse shouldInterceptRequest(WebView view,
-                                                              WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                Log.v("WebClient", "URL LOAD: " + url);
-                return shouldInterceptRequest(view, url);
-            }
+//            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+//            public WebResourceResponse shouldInterceptRequest(WebView view,
+//                                                              WebResourceRequest request) {
+//                String url = request.getUrl().toString();
+//                Log.v("WebClient", "URL LOAD: " + url);
+//                return shouldInterceptRequest(view, url);
+//            }
 
-            public void onReceivedError(WebView view, int errorCode,
-                                        String description, String failingUrl) {
-                Log.v("WebClient", "Error: " + description);
-            }
+//            public void onReceivedError(WebView view, int errorCode,
+//                                        String description, String failingUrl) {
+//                Log.v("WebClient", "Error: " + description);
+//            }
 
-            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-            public void onReceivedClientCertRequest(WebView view, ClientCertRequest request) {
-                Log.v("WebClient", "Cancel request: " + request.getHost());
-                request.cancel();
-            }
+//            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+//            public void onReceivedClientCertRequest(WebView view, ClientCertRequest request) {
+//                Log.v("WebClient", "Cancel request: " + request.getHost());
+//                request.cancel();
+//            }
 
-            public boolean shouldOverrideUrlLoading(WebView view, String url){
-                // do your handling codes here, which url is the requested url
-                // probably you need to open that url rather than redirect:
-                Log.v("WebClient", "shouldOverrideUrlLoading " + url);
-                return false; // then it is not handled by default action
-            }
+//            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+//                // do your handling codes here, which url is the requested url
+//                // probably you need to open that url rather than redirect:
+//                Log.v("WebClient", "shouldOverrideUrlLoading " + url);
+//                return false; // then it is not handled by default action
+//            }
 
             @Override
-            public void onPageFinished(WebView view, String url){
-                String cookies = CookieManager.getInstance().getCookie(url);
-                Log.d("WebClient", url + ": cookies:" + cookies );
+            public void onPageFinished(WebView view, String url) {
+                if (url.startsWith(serverUrl)) {
+                    String cookies_header = CookieManager.getInstance().getCookie(url);
+                    List<HttpCookie> cookies = HttpCookie.parse(cookies_header);
+                    for (HttpCookie cookie: cookies) {
+                        if (cookie.getName().equals("AUTH-TOKEN")){
+                            String token = cookie.getValue();
+                            Log.d("WebClient", "FOUND TOKEN:" + token);
+                            return;
+                        }
+                    }
+                    Log.d("WebClient", "NO TOKEN AFTER LOGIN");
+                }
             }
         });
 
         WebSettings webSettings = myWebView.getSettings();
         webSettings.setJavaScriptEnabled(false);
+
         //myWebView.loadUrl("https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com/");
-        myWebView.loadUrl("https://192.168.1.2:8443/auth/facebook");
+
+        boolean logout = false;
+        if (logout) {
+            String token = "<TOKEN_FROM_DB>";
+            myWebView.loadUrl("https://www.facebook.com/logout.php?access_token=" + token + "&confirm=1&next=" + "https%3A%2F%2F192.168.1.2%3A8443%2Fauth%2Ffacebook");
+        } else {
+            myWebView.loadUrl(serverUrl + "/auth/facebook");
+        }
     }
 
     public void sendZipMessage(View view) {
