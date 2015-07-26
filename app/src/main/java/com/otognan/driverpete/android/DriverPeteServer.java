@@ -1,6 +1,7 @@
 package com.otognan.driverpete.android;
 
 
+import retrofit.Callback;
 import retrofit.client.Response;
 import retrofit.http.GET;
 
@@ -9,5 +10,5 @@ public interface DriverPeteServer {
 //    User getCurrentUser();
 
     @GET("/api/user/current")
-    Response userListResponse();
+    void userListResponse(Callback<User> callback);
 }

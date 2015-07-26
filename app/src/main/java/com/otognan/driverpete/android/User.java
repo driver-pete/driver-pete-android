@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-//{"id":null,"username":null,"expires":0,"roles":[]}
 public class User  {
 
     private Long id;
@@ -14,15 +13,17 @@ public class User  {
 
     private long expires;
 
-    private boolean accountExpired;
-
-    private boolean accountLocked;
-
-    private boolean credentialsExpired;
-
-    private boolean accountEnabled;
-
     private Set<String> roles = new HashSet<>();
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", expires=" + expires +
+                ", roles=" + roles +
+                '}';
+    }
 
     public Long getId() {
         return id;
@@ -56,8 +57,5 @@ public class User  {
         this.expires = expires;
     }
 
-    public String toString() {
-        return getClass().getSimpleName() + ": " + getUsername();
-    }
 }
 

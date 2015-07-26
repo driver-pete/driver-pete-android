@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -22,14 +21,14 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import java.io.FileOutputStream;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
-import retrofit.ErrorHandler;
+import retrofit.Callback;
+import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.OkClient;
@@ -238,51 +237,41 @@ public class MainActivity extends Activity implements
     private void updateLoginStatus() {
         boolean loggedIn = this.getCurrentToken() != null;
         if (loggedIn) {
-            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in.");
+            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as ..");
             findViewById(R.id.loginButton).setVisibility(View.INVISIBLE);
             findViewById(R.id.logoutButton).setVisibility(View.VISIBLE);
+            this.serverAPI().userListResponse(new Callback<User>() {
+                @Override public void success(User user, Response response) {
+                    ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as " + user.getUsername());
+                }
+                @Override public void failure(RetrofitError error) {
+                    ((TextView) findViewById(R.id.loginStatusTextView)).setText("login user failure");
+                }
+            });
         } else {
             ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged out.");
             findViewById(R.id.loginButton).setVisibility(View.VISIBLE);
             findViewById(R.id.logoutButton).setVisibility(View.INVISIBLE);
         }
+    }
 
-//        RequestInterceptor requestInterceptor = new RequestInterceptor() {
-//            @Override
-//            public void intercept(RequestFacade request) {
-//                request.addHeader("User-Agent", "Retrofit-Sample-App");
-//            }
-//        };
-//
-//        RestAdapter restAdapter = new RestAdapter.Builder()
-//                .setEndpoint("https://api.github.com")
-//                .setRequestInterceptor(requestInterceptor)
-//                .build();
-
-        class DownloadFilesTask extends AsyncTask<Void, Void, Response> {
-            protected Response doInBackground(Void... params) {
-
-                RestAdapter restAdapter = new RestAdapter.Builder()
-                        .setEndpoint(serverUrl)
-                        .setLogLevel(RestAdapter.LogLevel.FULL)
-                        //.setErrorHandler(new MyErrorHandler())
-                        //.setClient(new OkClient(UnsafeHttpsClient.getUnsafeOkHttpClient()))
-                        .build();
-
-
-                DriverPeteServer service = restAdapter.create(DriverPeteServer.class);
-                //User user = service.getCurrentUser();
-                Response response = service.userListResponse();
-                return response;
+    private DriverPeteServer serverAPI() {
+        final String token = this.getCurrentToken();
+        RequestInterceptor requestInterceptor = new RequestInterceptor() {
+            @Override
+            public void intercept(RequestFacade request) {
+                request.addHeader("X-AUTH-TOKEN", token);
             }
+        };
+
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(serverUrl)
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setClient(new OkClient(UnsafeHttpsClient.getUnsafeOkHttpClient()))
+                .setRequestInterceptor(requestInterceptor)
+                .build();
 
 
-            protected void onPostExecute(Response result) {
-                Log.d("USERRRR", result.toString());
-            }
-        }
-
-        new DownloadFilesTask().execute();
-
+       return restAdapter.create(DriverPeteServer.class);
     }
 }
