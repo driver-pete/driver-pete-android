@@ -1,6 +1,8 @@
 package com.otognan.driverpete.android;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.http.SslError;
 import android.support.v7.app.ActionBarActivity;
@@ -46,8 +48,23 @@ public class LoginActivity extends ActionBarActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 if (url.startsWith(serverUrl)) {
-                    view.destroy();
                     String cookies_header = CookieManager.getInstance().getCookie(url);
+                    if (cookies_header == null) {
+                        AlertDialog.Builder builder1 = new AlertDialog.Builder(LoginActivity.this);
+                        builder1.setMessage("No token is received from the server");
+                        builder1.setCancelable(true);
+                        builder1.setPositiveButton("Ok",
+                                new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        dialog.cancel();
+                                    }
+                                });
+
+                        AlertDialog alert11 = builder1.create();
+                        alert11.show();
+                        return;
+                    }
+                    view.destroy();
                     List<HttpCookie> cookies = HttpCookie.parse(cookies_header);
                     for (HttpCookie cookie : cookies) {
                         if (cookie.getName().equals("AUTH-TOKEN")) {
@@ -77,7 +94,15 @@ public class LoginActivity extends ActionBarActivity {
             String token = "<TOKEN_FROM_DB>";
             loginWebView.loadUrl("https://www.facebook.com/logout.php?access_token=" + token + "&confirm=1&next=" + "https%3A%2F%2F192.168.1.2%3A8443%2Fauth%2Ffacebook");
         } else {
-            loginWebView.loadUrl(serverUrl + "/auth/facebook");
+            try {
+                loginWebView.loadUrl(serverUrl + "/auth/facebook");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+
+                Log.d("WebClient", "EXCEPTION");
+                loginWebView.destroy();
+            }
+
         }
     }
 

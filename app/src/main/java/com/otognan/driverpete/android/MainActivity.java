@@ -34,6 +34,8 @@ public class MainActivity extends Activity implements
         LocationListener {
 
     private static final String LOG_TAG = "MainActivity";
+    private static final String serverUrl = "https://192.168.1.2:8443";
+    //private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
 
     // Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
