@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
@@ -65,15 +66,30 @@ public class MainActivity extends Activity implements
 
     private List<String> data;
 
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-        this.screenLog("GoogleApiClient connection has failed");
+        this.screenLog("GoogleApiClient connection has failed. Setting up fake messages..");
+
+        final Handler timerHandler = new Handler();
+        Runnable timerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                Location location = new Location("Google");
+                location.setTime(System.currentTimeMillis());
+                location.setLatitude(34.34);
+                location.setLongitude(67.67);
+                MainActivity.this.onLocationChanged(location);
+                timerHandler.postDelayed(this, 1000);
+            }
+        };
+        timerHandler.postDelayed(timerRunnable, 0);
     }
 
     @Override
     public void onLocationChanged(Location location) {
         String message = String.format("%s %f %f\n",
-                new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date()),
+                new SimpleDateFormat("HH:mm:ss", Locale.US).format(location.getTime()),
                 location.getLatitude(),
                 location.getLongitude());
         this.data.add(message);
@@ -195,9 +211,6 @@ public class MainActivity extends Activity implements
 
 
     public void logIn(View view) {
-
-        //final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
-
         Intent intent = new Intent(this, LoginActivity.class);
         intent.putExtra("serverUrl", serverUrl);
         this.startActivityForResult(intent, LOGIN_ACTIVITY_RESULT_ID);
