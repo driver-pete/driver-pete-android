@@ -43,9 +43,10 @@
         android:layout_height="wrap_content"
         android:text="Log In"
         android:id="@+id/loginButton"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="logIn" />
+        android:onClick="logIn"
+        android:layout_alignTop="@+id/logoutButton"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -53,7 +54,7 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:text="Login status"
         android:id="@+id/loginStatusTextView"
-        android:layout_alignTop="@+id/loginButton"
+        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true" />
 
@@ -63,8 +64,8 @@
         android:text="Log out"
         android:id="@+id/logoutButton"
         android:onClick="logOut"
-        android:layout_alignParentTop="true"
-        android:layout_alignLeft="@+id/loginButton"
-        android:layout_alignStart="@+id/loginButton" />
+        android:layout_below="@+id/loginStatusTextView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
 </RelativeLayout>

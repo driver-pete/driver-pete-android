@@ -27,6 +27,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 
+import retrofit.Callback;
+import retrofit.RequestInterceptor;
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.client.OkClient;
+import retrofit.client.Response;
+
 
 public class MainActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -188,7 +195,7 @@ public class MainActivity extends Activity implements
 
 
     public void logIn(View view) {
-        final String serverUrl = "https://192.168.1.2:8443";
+
         //final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
 
         Intent intent = new Intent(this, LoginActivity.class);
@@ -231,13 +238,41 @@ public class MainActivity extends Activity implements
     private void updateLoginStatus() {
         boolean loggedIn = this.getCurrentToken() != null;
         if (loggedIn) {
-            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in.");
+            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as ..");
             findViewById(R.id.loginButton).setVisibility(View.INVISIBLE);
             findViewById(R.id.logoutButton).setVisibility(View.VISIBLE);
+            this.serverAPI().currentUser(new Callback<User>() {
+                @Override public void success(User user, Response response) {
+                    ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as " + user.getUsername());
+                }
+                @Override public void failure(RetrofitError error) {
+                    ((TextView) findViewById(R.id.loginStatusTextView)).setText("login user failure");
+                }
+            });
         } else {
             ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged out.");
             findViewById(R.id.loginButton).setVisibility(View.VISIBLE);
             findViewById(R.id.logoutButton).setVisibility(View.INVISIBLE);
         }
+    }
+
+    private DriverPeteServer serverAPI() {
+        final String token = this.getCurrentToken();
+        RequestInterceptor requestInterceptor = new RequestInterceptor() {
+            @Override
+            public void intercept(RequestFacade request) {
+                request.addHeader("X-AUTH-TOKEN", token);
+            }
+        };
+
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setEndpoint(serverUrl)
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setClient(new OkClient(UnsafeHttpsClient.getUnsafeOkHttpClient()))
+                .setRequestInterceptor(requestInterceptor)
+                .build();
+
+
+       return restAdapter.create(DriverPeteServer.class);
     }
 }
