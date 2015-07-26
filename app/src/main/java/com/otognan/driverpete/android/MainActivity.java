@@ -240,7 +240,7 @@ public class MainActivity extends Activity implements
             ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as ..");
             findViewById(R.id.loginButton).setVisibility(View.INVISIBLE);
             findViewById(R.id.logoutButton).setVisibility(View.VISIBLE);
-            this.serverAPI().userListResponse(new Callback<User>() {
+            this.serverAPI().currentUser(new Callback<User>() {
                 @Override public void success(User user, Response response) {
                     ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as " + user.getUsername());
                 }
