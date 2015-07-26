@@ -64,7 +64,7 @@ public class MainActivity extends Activity implements
     // Define an object that holds accuracy and frequency parameters
     private GoogleApiClient mGoogleApiClient;
 
-    private List<String> data;
+    private Trajectory currentTrajectory = new Trajectory();
 
 
     @Override
@@ -88,19 +88,13 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLocationChanged(Location location) {
-        String message = String.format("%s %f %f\n",
-                new SimpleDateFormat("HH:mm:ss", Locale.US).format(location.getTime()),
-                location.getLatitude(),
-                location.getLongitude());
-        this.data.add(message);
-        this.screenLog(message);
+        this.currentTrajectory.addLocation(location);
+        this.screenLog(Trajectory.locationToString(location) + "\n");
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        this.data = new LinkedList<String>();
 
         setContentView(R.layout.activity_main);
 
@@ -160,27 +154,9 @@ public class MainActivity extends Activity implements
         }
     }
 
-    public void sendTextMessage(View view) {
-
-        Intent i = new Intent(Intent.ACTION_SEND);
-        i.setType("message/rfc822");
-        i.putExtra(Intent.EXTRA_EMAIL  , new String[]{"otognan@gmail.com"});
-        i.putExtra(Intent.EXTRA_SUBJECT, "new Text GPS");
+    public void sendToServer(View view) {
 
 
-        String full_data = "";
-        for (String s : this.data)
-        {
-            full_data += s;
-        }
-
-        i.putExtra(Intent.EXTRA_TEXT, full_data);
-
-        try {
-            startActivity(Intent.createChooser(i, "Send text mail..."));
-        } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void screenLog(String message) {
