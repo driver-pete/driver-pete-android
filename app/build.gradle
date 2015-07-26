@@ -20,6 +20,10 @@ android {
     adbOptions {
         timeOutInMs 20000 // 5 seconds in ms.
     }
+    lintOptions {
+        //https://github.com/square/okio/issues/58
+        warning 'InvalidPackage'
+    }
 }
 
 dependencies {
