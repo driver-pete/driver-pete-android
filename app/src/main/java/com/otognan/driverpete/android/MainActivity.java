@@ -125,7 +125,7 @@ public class MainActivity extends Activity implements
                 .addOnConnectionFailedListener(this)
                 .build();
 
-        this.screenLog("Connecting to google api..");
+        this.screenLog("Connecting to google api..\n");
         mGoogleApiClient.connect();
     }
 
@@ -183,7 +183,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onConnected(Bundle bundle) {
-        this.screenLog("Location services connected");
+        this.screenLog("Location services connected\n");
         LocationRequest locationRequest;
         locationRequest = LocationRequest.create();
         // Use high accuracy
