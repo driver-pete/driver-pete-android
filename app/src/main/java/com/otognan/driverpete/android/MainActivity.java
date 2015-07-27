@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -23,6 +24,10 @@ import com.google.android.gms.location.LocationServices;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.NoSuchElementException;
 
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
@@ -30,6 +35,8 @@ import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
+import retrofit.mime.TypedByteArray;
+import retrofit.mime.TypedInput;
 
 
 public class MainActivity extends Activity implements
@@ -38,8 +45,10 @@ public class MainActivity extends Activity implements
         LocationListener {
 
     private static final String LOG_TAG = "MainActivity";
-    private static final String serverUrl = "https://192.168.1.2:8443";
-    //private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
+    //private static final String serverUrl = "https://192.168.1.2:8443";
+    private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
+
+    private static final double locationDistanceThreshold = 10.;
 
     // Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -85,8 +94,18 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLocationChanged(Location location) {
-        this.currentTrajectory.addLocation(location);
-        this.screenLog(Trajectory.locationToString(location) + "\n");
+        try {
+            Location lastLocaton = this.currentTrajectory.lastLocation();
+            if (lastLocaton.distanceTo(location) > locationDistanceThreshold) {
+                this.currentTrajectory.addLocation(location);
+                this.screenLog(Trajectory.locationToShortString(location) + "\n");
+            } else {
+                Log.d(LOG_TAG,Trajectory.locationToShortString(location) + " is ignored");
+            }
+        } catch (NoSuchElementException ex){
+            this.currentTrajectory.addLocation(location);
+            this.screenLog(Trajectory.locationToShortString(location) + "\n");
+        }
     }
 
     @Override
@@ -138,9 +157,23 @@ public class MainActivity extends Activity implements
         }
     }
 
-    public void sendToServer(View view) {
+    public void sendToServer(View view) throws Exception {
+        byte[] content = this.currentTrajectory.compress();
+        byte[] encodedBytes = Base64.encode(content, Base64.DEFAULT);
+        TypedInput in = new TypedByteArray("application/octet-stream", encodedBytes);
 
-
+        final String label = new SimpleDateFormat("dd-M-yyyy_hh-mm-ss").format(new Date());
+        this.serverAPI().uploadCompressedTrajectory(label, in,
+                new Callback<Response>() {
+                    @Override public void success(Response returnResponse, Response response) {
+                        ((TextView) findViewById(R.id.trajectoryStatus)).setText("Uploaded at " + label);
+                        MainActivity.this.currentTrajectory.clear();
+                        ((TextView) findViewById(R.id.textView)).setText("");
+                    }
+                    @Override public void failure(RetrofitError error) {
+                        ((TextView) findViewById(R.id.trajectoryStatus)).setText("Failed to upload at " + label + " " + error.toString());
+                    }
+                });
     }
 
     private void screenLog(String message) {

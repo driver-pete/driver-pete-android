@@ -10,17 +10,28 @@ import java.util.Locale;
 
 public class Trajectory {
 
-    private List<Location> locations = new LinkedList<Location>();
+    private LinkedList<Location> locations = new LinkedList<Location>();
 
     public void addLocation(Location location) {
         this.locations.add(location);
     }
 
+    Location lastLocation() {
+        return this.locations.getLast();
+    }
+
     public static String locationToString(Location location) {
         return String.format("%s %f %f",
-            new SimpleDateFormat("HH:mm:ss", Locale.US).format(location.getTime()),
-            location.getLatitude(),
-            location.getLongitude());
+                new SimpleDateFormat("dd-M-yyyy_hh-mm-ss", Locale.US).format(location.getTime()),
+                location.getLatitude(),
+                location.getLongitude());
+    }
+
+    public static String locationToShortString(Location location) {
+        return String.format("%s %f %f",
+                new SimpleDateFormat("hh-mm-ss", Locale.US).format(location.getTime()),
+                location.getLatitude(),
+                location.getLongitude());
     }
 
     public String dumpToString() {
@@ -35,6 +46,10 @@ public class Trajectory {
     public byte[] compress() throws Exception {
         String string = this.dumpToString();
         return Compress.compress(string);
+    }
+
+    public void clear() {
+        this.locations.clear();
     }
 
 }
