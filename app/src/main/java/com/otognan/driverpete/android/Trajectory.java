@@ -23,5 +23,18 @@ public class Trajectory {
             location.getLongitude());
     }
 
+    public String dumpToString() {
+        String stringData = "";
+        for (Location l : this.locations)
+        {
+            stringData += Trajectory.locationToString(l) + "\n";
+        }
+        return stringData;
+    }
+
+    public byte[] compress() throws Exception {
+        String string = this.dumpToString();
+        return Compress.compress(string);
+    }
 
 }

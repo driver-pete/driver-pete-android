@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 
 import retrofit.Callback;
@@ -55,6 +56,7 @@ public class MainActivity extends Activity implements
 
 
     private static final int LOGIN_ACTIVITY_RESULT_ID = 1;
+    private static final int EMAIL_ACTIVITY_RESULT_ID = 2;
 
     // Define an object that holds accuracy and frequency parameters
     private GoogleApiClient mGoogleApiClient;
@@ -73,7 +75,7 @@ public class MainActivity extends Activity implements
                 Location location = new Location("Google");
                 location.setTime(System.currentTimeMillis());
                 location.setLatitude(34.34);
-                location.setLongitude(67.67);
+                location.setLongitude(-117.02);
                 MainActivity.this.onLocationChanged(location);
                 timerHandler.postDelayed(this, 1000);
             }
@@ -110,40 +112,27 @@ public class MainActivity extends Activity implements
 
     public void sendZipMessage(View view) {
 
+        String filename = "gps.myfile";
+        try {
+            FileOutputStream dest = this.openFileOutput(filename, Context.MODE_WORLD_READABLE);
+            dest.write(this.currentTrajectory.compress());
+            dest.close();
+        } catch (Exception ex) {
+            Log.e(LOG_TAG, "Failed to compress file trajectory");
+            return;
+        }
+
         Intent i = new Intent(Intent.ACTION_SEND);
         i.setType("message/rfc822");
         i.putExtra(Intent.EXTRA_EMAIL, new String[]{"otognan@gmail.com"});
         i.putExtra(Intent.EXTRA_SUBJECT, "new Zip GPS");
         i.putExtra(Intent.EXTRA_TEXT, "");
 
-        String full_data = "";
-        for (String s : this.data)
-        {
-            full_data += s;
-        }
-
-        FileOutputStream outputStream;
-        String textFileName = "gps.txt";
-
-        try {
-            outputStream = this.openFileOutput(textFileName, Context.MODE_WORLD_READABLE);
-            outputStream.write(full_data.getBytes());
-            outputStream.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        String[] arrayw = new String[1];
-        arrayw[0] = getFileStreamPath(textFileName).getAbsolutePath();
-        ZipfileCompress zipfileCompress = new ZipfileCompress(arrayw, "gps.zip");
-        zipfileCompress.zip(this);
-
-        Uri fileUri = Uri.fromFile(getFileStreamPath("gps.zip"));
+        Uri fileUri = Uri.fromFile(getFileStreamPath(filename));
         i.putExtra(Intent.EXTRA_STREAM, fileUri);
 
-
         try {
-            startActivityForResult(Intent.createChooser(i, "Send zip mail..."), 0);
+            startActivityForResult(Intent.createChooser(i, "Send zip mail..."), EMAIL_ACTIVITY_RESULT_ID);
         } catch (android.content.ActivityNotFoundException ex) {
             Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
         }
@@ -211,6 +200,8 @@ public class MainActivity extends Activity implements
             }
 
             updateLoginStatus();
+        } else if (requestCode ==  EMAIL_ACTIVITY_RESULT_ID) {
+            Log.d(LOG_TAG, "Email result: " + Integer.toString(resultCode));
         }
     }
 
