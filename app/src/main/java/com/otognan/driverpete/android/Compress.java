@@ -1,52 +1,38 @@
 package com.otognan.driverpete.android;
-import android.content.Context;
-import android.util.Log;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStreamReader;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class Compress {
-    private static final int BUFFER = 2048;
 
-    private String[] _files;
-    private String _zipFile;
-
-    public Compress(String[] files, String zipFile) {
-        _files = files;
-        _zipFile = zipFile;
+    public static byte[] compress(String str) throws Exception {
+        if (str == null || str.length() == 0) {
+            return null;
+        }
+        ByteArrayOutputStream obj=new ByteArrayOutputStream();
+        GZIPOutputStream gzip = new GZIPOutputStream(obj);
+        gzip.write(str.getBytes("UTF-8"));
+        gzip.close();
+        return obj.toByteArray();
     }
 
-    public void zip(Context context) {
-        try  {
-            BufferedInputStream origin = null;
-            FileOutputStream dest = context.openFileOutput(_zipFile, Context.MODE_WORLD_READABLE);
-
-            ZipOutputStream out = new ZipOutputStream(new BufferedOutputStream(dest));
-
-            byte data[] = new byte[BUFFER];
-
-            for(int i=0; i < _files.length; i++) {
-                Log.v("c.o.d.a.Compress", "Adding: " + _files[i]);
-                FileInputStream fi = new FileInputStream(_files[i]);
-                origin = new BufferedInputStream(fi, BUFFER);
-                ZipEntry entry = new ZipEntry(_files[i].substring(_files[i].lastIndexOf("/") + 1));
-                out.putNextEntry(entry);
-                int count;
-                while ((count = origin.read(data, 0, BUFFER)) != -1) {
-                    out.write(data, 0, count);
-                }
-                origin.close();
-            }
-
-            out.close();
-        } catch(Exception e) {
-            e.printStackTrace();
+    public static String decompress(byte[] inputBytes) throws Exception {
+        if (inputBytes == null) {
+            return null;
         }
-
+        GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(inputBytes));
+        BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
+        String outStr = "";
+        String line;
+        while ((line=bf.readLine())!=null) {
+            outStr += line;
+        }
+        return outStr;
     }
 
 }
