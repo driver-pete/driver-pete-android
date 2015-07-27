@@ -22,11 +22,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
 
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
@@ -140,8 +135,8 @@ public class MainActivity extends Activity implements
 
         String[] arrayw = new String[1];
         arrayw[0] = getFileStreamPath(textFileName).getAbsolutePath();
-        Compress compress = new Compress(arrayw, "gps.zip");
-        compress.zip(this);
+        ZipfileCompress zipfileCompress = new ZipfileCompress(arrayw, "gps.zip");
+        zipfileCompress.zip(this);
 
         Uri fileUri = Uri.fromFile(getFileStreamPath("gps.zip"));
         i.putExtra(Intent.EXTRA_STREAM, fileUri);

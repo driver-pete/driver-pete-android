@@ -9,13 +9,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 
-public class Compress {
+public class ZipfileCompress {
     private static final int BUFFER = 2048;
 
     private String[] _files;
     private String _zipFile;
 
-    public Compress(String[] files, String zipFile) {
+    public ZipfileCompress(String[] files, String zipFile) {
         _files = files;
         _zipFile = zipFile;
     }
@@ -30,7 +30,7 @@ public class Compress {
             byte data[] = new byte[BUFFER];
 
             for(int i=0; i < _files.length; i++) {
-                Log.v("c.o.d.a.Compress", "Adding: " + _files[i]);
+                Log.v("c.o.d.a.ZipfileCompress", "Adding: " + _files[i]);
                 FileInputStream fi = new FileInputStream(_files[i]);
                 origin = new BufferedInputStream(fi, BUFFER);
                 ZipEntry entry = new ZipEntry(_files[i].substring(_files[i].lastIndexOf("/") + 1));
