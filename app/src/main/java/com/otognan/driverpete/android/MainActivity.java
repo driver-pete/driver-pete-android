@@ -162,7 +162,7 @@ public class MainActivity extends Activity implements
         byte[] encodedBytes = Base64.encode(content, Base64.DEFAULT);
         TypedInput in = new TypedByteArray("application/octet-stream", encodedBytes);
 
-        final String label = new SimpleDateFormat("dd-M-yyyy_hh-mm-ss").format(new Date());
+        final String label = new SimpleDateFormat("dd-M-yyyy_HH-mm-ss").format(new Date());
         this.serverAPI().uploadCompressedTrajectory(label, in,
                 new Callback<Response>() {
                     @Override public void success(Response returnResponse, Response response) {
