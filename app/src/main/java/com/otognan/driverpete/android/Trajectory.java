@@ -22,14 +22,14 @@ public class Trajectory {
 
     public static String locationToString(Location location) {
         return String.format("%s %f %f",
-                new SimpleDateFormat("dd-M-yyyy_hh-mm-ss", Locale.US).format(location.getTime()),
+                new SimpleDateFormat("dd-M-yyyy_HH-mm-ss", Locale.US).format(location.getTime()),
                 location.getLatitude(),
                 location.getLongitude());
     }
 
     public static String locationToShortString(Location location) {
         return String.format("%s %f %f",
-                new SimpleDateFormat("hh-mm-ss", Locale.US).format(location.getTime()),
+                new SimpleDateFormat("HH-mm-ss", Locale.US).format(location.getTime()),
                 location.getLatitude(),
                 location.getLongitude());
     }
