@@ -22,7 +22,7 @@ public class Trajectory {
 
     public static String locationToString(Location location) {
         return String.format("%s %f %f",
-                new SimpleDateFormat("dd-M-yyyy_HH-mm-ss", Locale.US).format(location.getTime()),
+                new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss", Locale.US).format(location.getTime()),
                 location.getLatitude(),
                 location.getLongitude());
     }
