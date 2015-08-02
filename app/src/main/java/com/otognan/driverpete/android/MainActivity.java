@@ -21,13 +21,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.squareup.okhttp.OkHttpClient;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.net.InetAddress;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 
 import retrofit.Callback;
 import retrofit.RequestInterceptor;
@@ -127,6 +130,38 @@ public class MainActivity extends Activity implements
 
         this.screenLog("Connecting to google api..\n");
         mGoogleApiClient.connect();
+
+        final int sendDataEverySeconds = 20;
+        final Handler timerHandler = new Handler();
+        class TimerRunnable implements Runnable {
+            @Override
+            public void run() {
+                MainActivity.this.serverAPI(2).currentUser(new Callback<User>() {
+                    @Override
+                    public void success(User user, Response response) {
+                        try {
+                            if (MainActivity.this.currentTrajectory.size() > 20) {
+                                MainActivity.this.screenLog("Sending from timer\n");
+                                MainActivity.this.sendToServer(null);
+                            } else {
+                                MainActivity.this.screenLog("Not sending from timer - too small\n");
+                            }
+                        } catch (Exception e) {
+                            MainActivity.this.screenLog("Not sending from timer - exception\n");
+                            e.printStackTrace();
+                        }
+                        timerHandler.postDelayed(TimerRunnable.this, sendDataEverySeconds*1000);
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        MainActivity.this.screenLog("Not sending from timer - no connectivity\n");
+                        timerHandler.postDelayed(TimerRunnable.this, sendDataEverySeconds*1000);
+                    }
+                });
+            }
+        };
+        timerHandler.postDelayed(new TimerRunnable(), sendDataEverySeconds*1000);
     }
 
     public void sendZipMessage(View view) {
@@ -165,12 +200,15 @@ public class MainActivity extends Activity implements
         final String label = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss").format(new Date());
         this.serverAPI().uploadCompressedTrajectory(label, in,
                 new Callback<Response>() {
-                    @Override public void success(Response returnResponse, Response response) {
+                    @Override
+                    public void success(Response returnResponse, Response response) {
                         ((TextView) findViewById(R.id.trajectoryStatus)).setText("Uploaded at " + label);
                         MainActivity.this.currentTrajectory.clear();
                         ((TextView) findViewById(R.id.textView)).setText("");
                     }
-                    @Override public void failure(RetrofitError error) {
+
+                    @Override
+                    public void failure(RetrofitError error) {
                         ((TextView) findViewById(R.id.trajectoryStatus)).setText("Failed to upload at " + label + " " + error.toString());
                     }
                 });
@@ -265,6 +303,10 @@ public class MainActivity extends Activity implements
     }
 
     private DriverPeteServer serverAPI() {
+        return this.serverAPI(0);
+    }
+
+    private DriverPeteServer serverAPI(int timeoutSeconds) {
         final String token = this.getCurrentToken();
         RequestInterceptor requestInterceptor = new RequestInterceptor() {
             @Override
@@ -273,14 +315,24 @@ public class MainActivity extends Activity implements
             }
         };
 
+        OkHttpClient httpClient = UnsafeHttpsClient.getUnsafeOkHttpClient();
+        if (timeoutSeconds != 0) {
+            httpClient.setReadTimeout(timeoutSeconds, TimeUnit.SECONDS);
+            httpClient.setConnectTimeout(timeoutSeconds, TimeUnit.SECONDS);
+        }
         RestAdapter restAdapter = new RestAdapter.Builder()
                 .setEndpoint(serverUrl)
                 .setLogLevel(RestAdapter.LogLevel.FULL)
-                .setClient(new OkClient(UnsafeHttpsClient.getUnsafeOkHttpClient()))
+                .setClient(new OkClient(httpClient))
                 .setRequestInterceptor(requestInterceptor)
                 .build();
 
 
        return restAdapter.create(DriverPeteServer.class);
     }
+
+    private void onInternetConnectivityResult(boolean connected) {
+
+    }
+
 }

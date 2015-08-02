@@ -52,4 +52,6 @@ public class Trajectory {
         this.locations.clear();
     }
 
+    public int size() { return this.locations.size(); }
+
 }
