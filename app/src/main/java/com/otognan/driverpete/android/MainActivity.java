@@ -387,8 +387,4 @@ public class MainActivity extends Activity implements
        return restAdapter.create(DriverPeteServer.class);
     }
 
-    private void onInternetConnectivityResult(boolean connected) {
-
-    }
-
 }

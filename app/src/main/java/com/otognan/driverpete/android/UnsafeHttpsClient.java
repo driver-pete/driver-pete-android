@@ -3,7 +3,6 @@ package com.otognan.driverpete.android;
 import com.squareup.okhttp.OkHttpClient;
 
 import java.security.cert.CertificateException;
-import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
