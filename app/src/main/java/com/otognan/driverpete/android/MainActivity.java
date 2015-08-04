@@ -133,10 +133,10 @@ public class MainActivity extends Activity implements
             }
         }
         if (this.isInSleepMode) {
-            this.stationaryLocationsCounter = 0;
-            Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
             this.subscribeToLocations(false);
         }
+        this.stationaryLocationsCounter = 0;
+        Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
         this.currentTrajectory.addLocation(location);
         this.screenLog(Trajectory.locationToShortString(location) + "\n");
     }
