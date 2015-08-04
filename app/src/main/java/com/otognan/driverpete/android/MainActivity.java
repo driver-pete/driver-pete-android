@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements
     //private static final String serverUrl = "https://192.168.1.2:8443";
     private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
 
-    private static final double locationDistanceThreshold = 10.;
+    private static final double locationDistanceThreshold = 30.;
 
     // Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -66,6 +66,17 @@ public class MainActivity extends Activity implements
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
 
+    // Update frequency in seconds in the sleep mode
+    public static final int SLEEP_UPDATE_INTERVAL_IN_SECONDS = 40;
+    // Update frequency in milliseconds in the sleep mode
+    private static final long SLEEP_UPDATE_INTERVAL =
+            MILLISECONDS_PER_SECOND * SLEEP_UPDATE_INTERVAL_IN_SECONDS;
+    // The fastest update frequency in the sleep mode, in seconds
+    private static final int FASTEST_SLEEP_INTERVAL_IN_SECONDS = 20;
+    // A fast frequency ceiling in milliseconds
+    private static final long FASTEST_SLEEP_INTERVAL =
+            MILLISECONDS_PER_SECOND * FASTEST_SLEEP_INTERVAL_IN_SECONDS;
+
 
     private static final int LOGIN_ACTIVITY_RESULT_ID = 1;
     private static final int EMAIL_ACTIVITY_RESULT_ID = 2;
@@ -74,6 +85,16 @@ public class MainActivity extends Activity implements
     private GoogleApiClient mGoogleApiClient;
 
     private Trajectory currentTrajectory = new Trajectory();
+
+    private int stationaryLocationsCounter = 0;
+    // switch to sleep mode after this number of stationary locations received
+    private static final int STATIONARY_LOCATION_SWITCH_THRESHOLD = 120;
+    private boolean isInSleepMode = false;
+
+
+    private static final int SEND_DATA_EVERY_SECONDS = 120;
+    private static final int MINIMAL_TRAJECTORY_SIZE_TO_SEND = 20;
+    private static final int SERVER_TIMEOUT_TO_CHECK_CONNECTIVITY = 2;
 
 
     @Override
@@ -97,18 +118,27 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLocationChanged(Location location) {
-        try {
+        if (this.currentTrajectory.size() > 0) {
             Location lastLocaton = this.currentTrajectory.lastLocation();
-            if (lastLocaton.distanceTo(location) > locationDistanceThreshold) {
-                this.currentTrajectory.addLocation(location);
-                this.screenLog(Trajectory.locationToShortString(location) + "\n");
-            } else {
+            if (lastLocaton.distanceTo(location) < locationDistanceThreshold) {
                 Log.d(LOG_TAG,Trajectory.locationToShortString(location) + " is ignored");
+                if (!this.isInSleepMode) {
+                    this.stationaryLocationsCounter += 1;
+                    Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
+                    if (this.stationaryLocationsCounter > STATIONARY_LOCATION_SWITCH_THRESHOLD) {
+                        this.subscribeToLocations(true);
+                    }
+                }
+                return;
             }
-        } catch (NoSuchElementException ex){
-            this.currentTrajectory.addLocation(location);
-            this.screenLog(Trajectory.locationToShortString(location) + "\n");
         }
+        if (this.isInSleepMode) {
+            this.stationaryLocationsCounter = 0;
+            Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
+            this.subscribeToLocations(false);
+        }
+        this.currentTrajectory.addLocation(location);
+        this.screenLog(Trajectory.locationToShortString(location) + "\n");
     }
 
     @Override
@@ -131,37 +161,36 @@ public class MainActivity extends Activity implements
         this.screenLog("Connecting to google api..\n");
         mGoogleApiClient.connect();
 
-        final int sendDataEverySeconds = 20;
         final Handler timerHandler = new Handler();
         class TimerRunnable implements Runnable {
             @Override
             public void run() {
-                MainActivity.this.serverAPI(2).currentUser(new Callback<User>() {
-                    @Override
-                    public void success(User user, Response response) {
-                        try {
-                            if (MainActivity.this.currentTrajectory.size() > 20) {
-                                MainActivity.this.screenLog("Sending from timer\n");
+                if (MainActivity.this.currentTrajectory.size() > MINIMAL_TRAJECTORY_SIZE_TO_SEND) {
+                    MainActivity.this.serverAPI(SERVER_TIMEOUT_TO_CHECK_CONNECTIVITY).currentUser(new Callback<User>() {
+                        @Override
+                        public void success(User user, Response response) {
+                            try {
                                 MainActivity.this.sendToServer(null);
-                            } else {
-                                MainActivity.this.screenLog("Not sending from timer - too small\n");
+                                MainActivity.this.screenLog("Sent to server by timer\n");
+                            } catch (Exception e) {
+                                MainActivity.this.screenLog("Not sending by timer - exception\n");
+                                e.printStackTrace();
                             }
-                        } catch (Exception e) {
-                            MainActivity.this.screenLog("Not sending from timer - exception\n");
-                            e.printStackTrace();
+                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
                         }
-                        timerHandler.postDelayed(TimerRunnable.this, sendDataEverySeconds*1000);
-                    }
-
-                    @Override
-                    public void failure(RetrofitError error) {
-                        MainActivity.this.screenLog("Not sending from timer - no connectivity\n");
-                        timerHandler.postDelayed(TimerRunnable.this, sendDataEverySeconds*1000);
-                    }
-                });
+                        @Override
+                        public void failure(RetrofitError error) {
+                            MainActivity.this.screenLog("Not sending from timer - no connectivity\n");
+                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
+                        }
+                    });
+                } else {
+                    MainActivity.this.screenLog("Not sending from timer - too small\n");
+                    timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS * 1000);
+                }
             }
         };
-        timerHandler.postDelayed(new TimerRunnable(), sendDataEverySeconds*1000);
+        timerHandler.postDelayed(new TimerRunnable(), SEND_DATA_EVERY_SECONDS*1000);
     }
 
     public void sendZipMessage(View view) {
@@ -203,8 +232,12 @@ public class MainActivity extends Activity implements
                     @Override
                     public void success(Response returnResponse, Response response) {
                         ((TextView) findViewById(R.id.trajectoryStatus)).setText("Uploaded at " + label);
+                        Location lastLocation = MainActivity.this.currentTrajectory.lastLocation();
                         MainActivity.this.currentTrajectory.clear();
                         ((TextView) findViewById(R.id.textView)).setText("");
+                        //Re-add last location to preserve continuity in logic
+                        MainActivity.this.currentTrajectory.addLocation(lastLocation);
+                        MainActivity.this.screenLog(Trajectory.locationToShortString(lastLocation) + "\n");
                     }
 
                     @Override
@@ -222,15 +255,38 @@ public class MainActivity extends Activity implements
     @Override
     public void onConnected(Bundle bundle) {
         this.screenLog("Location services connected\n");
+        subscribeToLocations(false);
+    }
+
+    private void subscribeToLocations(boolean sleepMode) {
+        this.isInSleepMode = sleepMode;
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+
+        if (sleepMode) {
+            this.screenLog("Subscribing to locations in sleep mode\n");
+        } else {
+            this.screenLog("Subcribing to fast locations\n");
+        }
         LocationRequest locationRequest;
         locationRequest = LocationRequest.create();
         // Use high accuracy
         locationRequest.setPriority(
                 LocationRequest.PRIORITY_HIGH_ACCURACY);
-        // Set the update interval to 5 seconds
-        locationRequest.setInterval(UPDATE_INTERVAL);
-        // Set the fastest update interval to 1 second
-        locationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+        // Set the update interval
+        if (sleepMode) {
+            locationRequest.setInterval(SLEEP_UPDATE_INTERVAL);
+        } else {
+            locationRequest.setInterval(UPDATE_INTERVAL);
+        }
+
+
+        // Set the fastest update interval
+        if (sleepMode) {
+            locationRequest.setFastestInterval(FASTEST_SLEEP_INTERVAL);
+        } else {
+            locationRequest.setFastestInterval(FASTEST_INTERVAL);
+        }
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 mGoogleApiClient, locationRequest, this);
     }
