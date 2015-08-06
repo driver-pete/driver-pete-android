@@ -51,7 +51,7 @@ public class MainActivity extends Activity implements
     //private static final String serverUrl = "https://192.168.1.2:8443";
     private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
 
-    private static final double locationDistanceThreshold = 30.;
+    private static final double locationDistanceThreshold = 50.;
 
     // Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
@@ -88,12 +88,12 @@ public class MainActivity extends Activity implements
 
     private int stationaryLocationsCounter = 0;
     // switch to sleep mode after this number of stationary locations received
-    private static final int STATIONARY_LOCATION_SWITCH_THRESHOLD = 120;
+    private static final int STATIONARY_LOCATION_SWITCH_THRESHOLD = 60;
     private boolean isInSleepMode = false;
 
 
     private static final int SEND_DATA_EVERY_SECONDS = 120;
-    private static final int MINIMAL_TRAJECTORY_SIZE_TO_SEND = 20;
+    private static final int MINIMAL_TRAJECTORY_SIZE_TO_SEND = 50;
     private static final int SERVER_TIMEOUT_TO_CHECK_CONNECTIVITY = 2;
 
 
@@ -132,13 +132,22 @@ public class MainActivity extends Activity implements
                 return;
             }
         }
-        if (this.isInSleepMode) {
-            this.subscribeToLocations(false);
+
+        // Do not switch to fast trajectories immediately but wait for 2 iterations
+        if (this.stationaryLocationsCounter > 2) {
+            this.stationaryLocationsCounter = 2;
         }
-        this.stationaryLocationsCounter = 0;
-        Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
-        this.currentTrajectory.addLocation(location);
-        this.screenLog(Trajectory.locationToShortString(location) + "\n");
+
+        if (this.stationaryLocationsCounter > 0) {
+            this.stationaryLocationsCounter -= 1;
+            Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
+        } else {
+            if (this.isInSleepMode) {
+                this.subscribeToLocations(false);
+            }
+            this.screenLog(Trajectory.locationToShortString(location) + "\n");
+            this.currentTrajectory.addLocation(location);
+        }
     }
 
     @Override
