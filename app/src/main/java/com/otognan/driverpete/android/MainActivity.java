@@ -56,12 +56,12 @@ public class MainActivity extends Activity implements
     // Milliseconds per second
     private static final int MILLISECONDS_PER_SECOND = 1000;
     // Update frequency in seconds
-    public static final int UPDATE_INTERVAL_IN_SECONDS = 5;
+    public static final int UPDATE_INTERVAL_IN_SECONDS = 10;
     // Update frequency in milliseconds
     private static final long UPDATE_INTERVAL =
             MILLISECONDS_PER_SECOND * UPDATE_INTERVAL_IN_SECONDS;
     // The fastest update frequency, in seconds
-    private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
+    private static final int FASTEST_INTERVAL_IN_SECONDS = 5;
     // A fast frequency ceiling in milliseconds
     private static final long FASTEST_INTERVAL =
             MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
@@ -88,7 +88,7 @@ public class MainActivity extends Activity implements
 
     private int stationaryLocationsCounter = 0;
     // switch to sleep mode after this number of stationary locations received
-    private static final int STATIONARY_LOCATION_SWITCH_THRESHOLD = 60;
+    private static final int STATIONARY_LOCATION_SWITCH_THRESHOLD_SECONDS = 180;
     private boolean isInSleepMode = false;
 
 
@@ -125,7 +125,8 @@ public class MainActivity extends Activity implements
                 if (!this.isInSleepMode) {
                     this.stationaryLocationsCounter += 1;
                     Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
-                    if (this.stationaryLocationsCounter > STATIONARY_LOCATION_SWITCH_THRESHOLD) {
+                    int stepsCounter = STATIONARY_LOCATION_SWITCH_THRESHOLD_SECONDS/UPDATE_INTERVAL_IN_SECONDS;
+                    if (this.stationaryLocationsCounter > stepsCounter) {
                         this.subscribeToLocations(true);
                     }
                 }
