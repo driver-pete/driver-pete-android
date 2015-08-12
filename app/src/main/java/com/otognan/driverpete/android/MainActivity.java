@@ -118,6 +118,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLocationChanged(Location location) {
+        Log.d(LOG_TAG,"Received location: " + Trajectory.locationToString(location));
         if (this.currentTrajectory.size() > 0) {
             Location lastLocaton = this.currentTrajectory.lastLocation();
             if (lastLocaton.distanceTo(location) < locationDistanceThreshold) {
@@ -236,7 +237,7 @@ public class MainActivity extends Activity implements
         byte[] encodedBytes = Base64.encode(content, Base64.DEFAULT);
         TypedInput in = new TypedByteArray("application/octet-stream", encodedBytes);
 
-        final String label = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss").format(new Date());
+        final String label = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss_z").format(new Date());
         this.serverAPI().uploadCompressedTrajectory(label, in,
                 new Callback<Response>() {
                     @Override
