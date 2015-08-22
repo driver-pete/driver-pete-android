@@ -48,8 +48,8 @@ public class MainActivity extends Activity implements
         LocationListener {
 
     private static final String LOG_TAG = "MainActivity";
-    //private static final String serverUrl = "https://192.168.1.2:8443";
-    private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
+    private static final String serverUrl = "https://192.168.1.2:8443";
+    //private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
 
     private static final double locationDistanceThreshold = 50.;
 
@@ -96,12 +96,14 @@ public class MainActivity extends Activity implements
     private static final int MINIMAL_TRAJECTORY_SIZE_TO_SEND = 50;
     private static final int SERVER_TIMEOUT_TO_CHECK_CONNECTIVITY = 2;
 
+    private Handler timerHandler;
+
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         this.screenLog("GoogleApiClient connection has failed. Setting up fake messages..");
 
-        final Handler timerHandler = new Handler();
+        this.timerHandler = new Handler();
         Runnable timerRunnable = new Runnable() {
             @Override
             public void run() {
@@ -270,6 +272,10 @@ public class MainActivity extends Activity implements
     }
 
     private void subscribeToLocations(boolean sleepMode) {
+        if (this.timerHandler != null) {
+            // simulation mode - do not subscirbe
+            return;
+        }
         this.isInSleepMode = sleepMode;
         LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
 
