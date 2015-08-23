@@ -5,12 +5,12 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!--allowBackup="false according to http://researchcenter.paloaltonetworks.com/2014/08/insecure-internal-storage-android/-->
+    <!-- allowBackup="false according to http://researchcenter.paloaltonetworks.com/2014/08/insecure-internal-storage-android/ -->
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
@@ -28,6 +28,10 @@
         <activity
             android:name=".LoginActivity"
             android:label="@string/title_activity_login" >
+        </activity>
+        <activity
+            android:name=".EndpointEditorActivity"
+            android:label="@string/title_activity_endpoint_editor" >
         </activity>
     </application>
 

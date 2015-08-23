@@ -8,8 +8,6 @@ public class TrajectoryEndpoint {
 
     private double longitude;
 
-    private int number;
-
     private String label;
 
     private String address;
@@ -64,12 +62,5 @@ public class TrajectoryEndpoint {
         this.address = address;
     }
 
-    public int getNumber() {
-        return number;
-    }
-
-    public void setNumber(int number) {
-        this.number = number;
-    }
 }
 

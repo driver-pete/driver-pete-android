@@ -22,11 +22,17 @@ public interface DriverPeteServer {
     @GET("/api/trajectory/endpoints")
     public void trajectoryEndpoints(Callback<List<TrajectoryEndpoint>> callback);
 
+    @POST("/api/trajectory/endpoints")
+    public void editEndpoint(@Body TrajectoryEndpoint endpoint, Callback<Response> callback);
+
     @GET("/api/trajectory/routes")
     public void routes(@Query("isAtoB") boolean isAtoB, Callback<List<String>> callback);
 
     @DELETE("/api/trajectory/state")
     public void resetProcessorState(Callback<Response> callback);
+
+    @DELETE("/api/trajectory/processed")
+    public void deleteProcessedUserData(Callback<Response> callback);
 
     @DELETE("/api/trajectory/endpoints/all")
     public void deleteAllEndpoints(Callback<Response> callback);
@@ -34,6 +40,6 @@ public interface DriverPeteServer {
     @DELETE("/api/trajectory/routes/all")
     public void deleteAllRoutes(Callback<Response> callback);
 
-    @POST("/api/trajectory/reprocess/all")
+    @GET("/api/trajectory/reprocess/all")
     public void reprocessAllUserData(Callback<Response> callback);
 }

@@ -1,94 +1,19 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity">
+    android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity"
+    android:orientation="vertical">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Send email"
-        android:id="@+id/test_button"
-        android:onClick="sendZipMessage"
-        android:layout_below="@+id/send_server_button"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginTop="88dp" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Send server"
-        android:id="@+id/send_server_button"
-        android:onClick="sendToServer"
-        android:nestedScrollingEnabled="true"
-        android:layout_alignTop="@+id/textView"
-        android:layout_alignLeft="@+id/test_button"
-        android:layout_alignStart="@+id/test_button" />
-
-
-    <TextView
-        android:layout_width="250dp"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:maxLines = "30"
-        android:scrollbars = "vertical"
-        android:id="@+id/textView"
-        android:layout_marginBottom="69dp"
-        android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@+id/send_server_button"
-        android:layout_toStartOf="@+id/send_server_button" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Log In"
-        android:id="@+id/loginButton"
-        android:onClick="logIn"
-        android:layout_alignTop="@+id/logoutButton"
-        android:layout_alignLeft="@+id/logoutButton"
-        android:layout_alignStart="@+id/logoutButton" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Login status"
-        android:id="@+id/loginStatusTextView"
-        android:layout_alignBaseline="@+id/loginButton"
-        android:layout_alignBottom="@+id/loginButton"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Log out"
-        android:id="@+id/logoutButton"
-        android:onClick="logOut"
-        android:layout_alignBottom="@+id/textView"
-        android:layout_toRightOf="@+id/loginStatusTextView"
-        android:layout_toEndOf="@+id/loginStatusTextView" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:text="Trajectory status"
-        android:id="@+id/trajectoryStatus"
-        android:textSize="8dp"
-        android:layout_below="@+id/loginButton"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:id="@+id/relativeLayout"
+        android:layout_above="@+id/trajectoryStatus"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/relativeLayout">
+        android:layout_alignParentStart="true">
 
         <TextView
             android:layout_width="wrap_content"
@@ -96,16 +21,17 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Address A"
             android:id="@+id/locationAAddress"
-            android:layout_below="@+id/locationANameText"
+            android:layout_below="@+id/locationALabelText"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_alignParentStart="true"
+            android:visibility="invisible" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Location A"
-            android:id="@+id/locationANameText"
+            android:id="@+id/locationALabelText"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
@@ -121,7 +47,9 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:layout_marginRight="55dp"
-            android:layout_marginEnd="55dp" />
+            android:layout_marginEnd="55dp"
+            android:onClick="editAEndpoint"
+            android:visibility="invisible" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -137,16 +65,17 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Address B"
             android:id="@+id/locationBAddress"
-            android:layout_below="@+id/locationBNameText"
+            android:layout_below="@+id/locationBLabelText"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_alignParentStart="true"
+            android:visibility="invisible" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Location B"
-            android:id="@+id/locationBNameText"
+            android:id="@+id/locationBLabelText"
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true" />
@@ -162,15 +91,105 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
             android:layout_marginRight="55dp"
-            android:layout_marginEnd="55dp" />
+            android:layout_marginEnd="55dp"
+            android:onClick="editBEndpoint"
+            android:visibility="invisible" />
     </RelativeLayout>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Recompute"
-        android:id="@+id/recomputeButton"
-        android:layout_above="@+id/loginButton"
-        android:layout_toEndOf="@+id/textView" />
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="256dp"
+        android:layout_toRightOf="@+id/loginStatusTextView"
+        android:layout_toEndOf="@+id/loginStatusTextView"
+        android:layout_alignTop="@+id/trajectoryStatus"
+        android:layout_gravity="center_horizontal|top">
 
-</RelativeLayout>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send server"
+            android:id="@+id/send_server_button"
+            android:onClick="sendToServer"
+            android:nestedScrollingEnabled="true"
+            android:layout_alignTop="@+id/textView"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Log out"
+            android:id="@+id/logoutButton"
+            android:onClick="logOut"
+            android:layout_below="@+id/send_server_button"
+            android:layout_alignLeft="@+id/send_server_button"
+            android:layout_alignStart="@+id/send_server_button" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Log In"
+            android:id="@+id/loginButton"
+            android:onClick="logIn"
+            android:layout_below="@+id/send_server_button"
+            android:layout_toLeftOf="@+id/logoutButton"
+            android:layout_toStartOf="@+id/logoutButton" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Recompute"
+            android:id="@+id/reprocessButton"
+            android:onClick="reprocessRequest"
+            android:layout_alignTop="@+id/textView"
+            android:layout_toLeftOf="@+id/send_server_button"
+            android:layout_toStartOf="@+id/send_server_button" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Login status"
+            android:id="@+id/loginStatusTextView"
+            android:layout_below="@+id/logoutButton"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="71dp"
+            android:layout_marginEnd="71dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Trajectory status"
+            android:id="@+id/trajectoryStatus"
+            android:textSize="8dp"
+            android:layout_below="@+id/loginStatusTextView"
+            android:layout_alignRight="@+id/loginStatusTextView"
+            android:layout_alignEnd="@+id/loginStatusTextView"
+            android:layout_marginTop="46dp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="refresh data"
+            android:id="@+id/refreshDataButton"
+            android:layout_alignBottom="@+id/trajectoryStatus"
+            android:layout_alignLeft="@+id/reprocessButton"
+            android:layout_alignStart="@+id/reprocessButton"
+            android:onClick="onRefreshDataButton" />
+
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:textSize="16sp"
+        android:maxLines = "30"
+        android:scrollbars = "vertical"
+        android:id="@+id/textView"
+        android:layout_alignParentTop="true"
+        android:layout_alignRight="@+id/loginStatusTextView"
+        android:layout_alignEnd="@+id/loginStatusTextView" />
+
+</LinearLayout>

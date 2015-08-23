@@ -2,7 +2,9 @@ package com.otognan.driverpete.android;
 
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -13,6 +15,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,13 +26,10 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.squareup.okhttp.OkHttpClient;
 
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.net.InetAddress;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.NoSuchElementException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import retrofit.Callback;
@@ -80,6 +80,7 @@ public class MainActivity extends Activity implements
 
     private static final int LOGIN_ACTIVITY_RESULT_ID = 1;
     private static final int EMAIL_ACTIVITY_RESULT_ID = 2;
+    private static final int EDIT_ENDPOINT_ACTIVITY_RESULT_ID = 3;
 
     // Define an object that holds accuracy and frequency parameters
     private GoogleApiClient mGoogleApiClient;
@@ -97,6 +98,9 @@ public class MainActivity extends Activity implements
     private static final int SERVER_TIMEOUT_TO_CHECK_CONNECTIVITY = 2;
 
     private Handler timerHandler;
+
+    private TrajectoryEndpoint endpointA;
+    private TrajectoryEndpoint endpointB;
 
 
     @Override
@@ -120,7 +124,7 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(LOG_TAG,"Received location: " + Trajectory.locationToString(location));
+        Log.d(LOG_TAG, "Received location: " + Trajectory.locationToString(location));
         if (this.currentTrajectory.size() > 0) {
             Location lastLocaton = this.currentTrajectory.lastLocation();
             if (lastLocaton.distanceTo(location) < locationDistanceThreshold) {
@@ -203,7 +207,9 @@ public class MainActivity extends Activity implements
                 }
             }
         };
-        timerHandler.postDelayed(new TimerRunnable(), SEND_DATA_EVERY_SECONDS*1000);
+        timerHandler.postDelayed(new TimerRunnable(), SEND_DATA_EVERY_SECONDS * 1000);
+
+        this.refreshData();
     }
 
     public void sendZipMessage(View view) {
@@ -346,6 +352,10 @@ public class MainActivity extends Activity implements
             updateLoginStatus();
         } else if (requestCode ==  EMAIL_ACTIVITY_RESULT_ID) {
             Log.d(LOG_TAG, "Email result: " + Integer.toString(resultCode));
+        } else if (requestCode == EDIT_ENDPOINT_ACTIVITY_RESULT_ID) {
+            if (resultCode == RESULT_OK) {
+                this.onEndpointEditingFinished(data);
+            }
         }
     }
 
@@ -404,4 +414,135 @@ public class MainActivity extends Activity implements
        return restAdapter.create(DriverPeteServer.class);
     }
 
+    public void reprocessRequest(View view) {
+        this.serverAPI().deleteProcessedUserData(new Callback<Response>() {
+            @Override
+            public void success(Response response, Response response2) {
+                MainActivity.this.serverAPI().reprocessAllUserData(new Callback<Response>() {
+                    @Override
+                    public void success(Response returnResponse, Response response) {
+                        MainActivity.this.showAlert("Processing is done", "Everything is fine");
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        MainActivity.this.showAlert("Processing error", error.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Delete endpoints error", error.getMessage());
+            }
+        });
+
+    }
+
+    private void showAlert(String title, String message) {
+        final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
+        alertDialog.setTitle(title);
+        alertDialog.setMessage(message);
+        alertDialog.setIcon(R.drawable.notification_template_icon_bg);
+        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                alertDialog.cancel();
+            } });
+        alertDialog.show();
+    }
+
+
+    public void onRefreshDataButton(View view) {
+        this.refreshData();
+    }
+
+    private void refreshData() {
+        this.refreshEndpoints();
+    }
+
+    private void refreshEndpoints() {
+        this.serverAPI().trajectoryEndpoints(new Callback<List<TrajectoryEndpoint>>() {
+            @Override
+            public void success(List<TrajectoryEndpoint> trajectoryEndpoints, Response response) {
+                if (trajectoryEndpoints.size() > 0) {
+                    MainActivity.this.endpointA = trajectoryEndpoints.get(0);
+                } else {
+                    MainActivity.this.endpointA = null;
+                }
+                if (trajectoryEndpoints.size() > 1) {
+                    MainActivity.this.endpointB = trajectoryEndpoints.get(1);
+                } else {
+                    MainActivity.this.endpointB = null;
+                }
+
+                MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
+                        R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
+                MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
+                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Failed to get endpoints", error.getMessage());
+            }
+        });
+    }
+
+
+    private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId ) {
+        TextView labelText = ((TextView) findViewById(labelTextId));
+        TextView addressText = ((TextView) findViewById(addressTextId));
+        Button button = ((Button) findViewById(editButtonId));
+        if (endpoint != null) {
+            labelText.setText(endpoint.getLabel());
+            addressText.setText(endpoint.getAddress());
+            addressText.setVisibility(View.VISIBLE);
+            button.setVisibility(View.VISIBLE);
+        } else {
+            addressText.setVisibility(View.INVISIBLE);
+            button.setVisibility(View.INVISIBLE);
+            labelText.setText("<NO ENDPOINT LOCATION FOUND>");
+        }
+    }
+
+    public void editAEndpoint(View view) {
+        Intent intent = new Intent(this, EndpointEditorActivity.class);
+        intent.putExtra("label", ((TextView) findViewById(R.id.locationALabelText)).getText());
+        intent.putExtra("address", ((TextView) findViewById(R.id.locationAAddress)).getText());
+        intent.putExtra("isLocationA", true);
+        this.startActivityForResult(intent, EDIT_ENDPOINT_ACTIVITY_RESULT_ID);
+    }
+
+    public void editBEndpoint(View view) {
+        Intent intent = new Intent(this, EndpointEditorActivity.class);
+        intent.putExtra("label", ((TextView) findViewById(R.id.locationBLabelText)).getText());
+        intent.putExtra("address", ((TextView) findViewById(R.id.locationBAddress)).getText());
+        intent.putExtra("isLocationA", false);
+        this.startActivityForResult(intent, EDIT_ENDPOINT_ACTIVITY_RESULT_ID);
+    }
+
+    private void onEndpointEditingFinished(Intent data) {
+        boolean isLocationA = data.getBooleanExtra("isLocationA", true);
+        TrajectoryEndpoint endpoint = isLocationA ? this.endpointA: this.endpointB;
+        endpoint.setLabel(data.getStringExtra("label"));
+        endpoint.setAddress(data.getStringExtra("address"));
+
+        if (isLocationA) {
+            MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
+                    R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
+        } else {
+            MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
+                    R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+        }
+
+        this.serverAPI().editEndpoint(endpoint, new Callback<Response>() {
+            @Override
+            public void success(Response response, Response response2) {}
+
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Failed to edit endpoint", error.getMessage());
+            }
+        });
+    }
 }
