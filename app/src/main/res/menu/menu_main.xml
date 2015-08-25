@@ -1,6 +1,17 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
-    <item android:id="@+id/action_settings" android:title="@string/action_settings"
-        android:orderInCategory="100" app:showAsAction="never" />
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.otognan.driverpete.android.MainActivity">
+    <item android:id="@+id/action_login" android:title="Log in"
+        android:orderInCategory="1" app:showAsAction="never" />
+    <item android:id="@+id/action_logout" android:title="Log out"
+        android:orderInCategory="2" app:showAsAction="never" />
+    <item android:id="@+id/action_send_to_server" android:title="Send data now"
+        android:orderInCategory="3" app:showAsAction="never" />
+    <item android:id="@+id/action_refresh_data" android:title="Refresh data"
+        android:orderInCategory="4" app:showAsAction="never" />
+    <item android:id="@+id/action_reprocess_all_data" android:title="Reprocess all"
+        android:orderInCategory="5" app:showAsAction="never" />
+    <item android:id="@+id/action_show_log" android:title="Show log"
+        android:orderInCategory="6" app:showAsAction="never" />
 </menu>

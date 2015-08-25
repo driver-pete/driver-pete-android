@@ -33,6 +33,16 @@
             android:name=".EndpointEditorActivity"
             android:label="@string/title_activity_endpoint_editor" >
         </activity>
+        <activity
+            android:name=".LogActivity"
+            android:label="@string/title_activity_log" >
+        </activity>
+
+        <service
+            android:name=".LogService"
+            android:enabled="true"
+            android:exported="false" >
+        </service>
     </application>
 
 </manifest>

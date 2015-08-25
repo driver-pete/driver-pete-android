@@ -43,13 +43,11 @@
             android:id="@+id/editAButton"
             android:layout_gravity="center_horizontal"
             android:layout_column="2"
+            android:onClick="editAEndpoint"
+            android:visibility="invisible"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginRight="55dp"
-            android:layout_marginEnd="55dp"
-            android:onClick="editAEndpoint"
-            android:visibility="invisible" />
+            android:layout_alignParentEnd="true" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -87,109 +85,21 @@
             android:id="@+id/editBButton"
             android:layout_gravity="center_horizontal"
             android:layout_column="2"
+            android:onClick="editBEndpoint"
+            android:visibility="invisible"
             android:layout_alignParentTop="true"
             android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginRight="55dp"
-            android:layout_marginEnd="55dp"
-            android:onClick="editBEndpoint"
-            android:visibility="invisible" />
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="256dp"
-        android:layout_toRightOf="@+id/loginStatusTextView"
-        android:layout_toEndOf="@+id/loginStatusTextView"
-        android:layout_alignTop="@+id/trajectoryStatus"
-        android:layout_gravity="center_horizontal|top">
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Send server"
-            android:id="@+id/send_server_button"
-            android:onClick="sendToServer"
-            android:nestedScrollingEnabled="true"
-            android:layout_alignTop="@+id/textView"
-            android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Log out"
-            android:id="@+id/logoutButton"
-            android:onClick="logOut"
-            android:layout_below="@+id/send_server_button"
-            android:layout_alignLeft="@+id/send_server_button"
-            android:layout_alignStart="@+id/send_server_button" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Log In"
-            android:id="@+id/loginButton"
-            android:onClick="logIn"
-            android:layout_below="@+id/send_server_button"
-            android:layout_toLeftOf="@+id/logoutButton"
-            android:layout_toStartOf="@+id/logoutButton" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Recompute"
-            android:id="@+id/reprocessButton"
-            android:onClick="reprocessRequest"
-            android:layout_alignTop="@+id/textView"
-            android:layout_toLeftOf="@+id/send_server_button"
-            android:layout_toStartOf="@+id/send_server_button" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Login status"
-            android:id="@+id/loginStatusTextView"
-            android:layout_below="@+id/logoutButton"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginRight="71dp"
-            android:layout_marginEnd="71dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Trajectory status"
-            android:id="@+id/trajectoryStatus"
-            android:textSize="8dp"
-            android:layout_below="@+id/loginStatusTextView"
-            android:layout_alignRight="@+id/loginStatusTextView"
-            android:layout_alignEnd="@+id/loginStatusTextView"
-            android:layout_marginTop="46dp" />
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="refresh data"
-            android:id="@+id/refreshDataButton"
-            android:layout_alignBottom="@+id/trajectoryStatus"
-            android:layout_alignLeft="@+id/reprocessButton"
-            android:layout_alignStart="@+id/reprocessButton"
-            android:onClick="onRefreshDataButton" />
-
     </RelativeLayout>
 
     <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:textSize="16sp"
-        android:maxLines = "30"
-        android:scrollbars = "vertical"
-        android:id="@+id/textView"
-        android:layout_alignParentTop="true"
-        android:layout_alignRight="@+id/loginStatusTextView"
-        android:layout_alignEnd="@+id/loginStatusTextView" />
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Trajectory status"
+        android:id="@+id/trajectoryStatus"
+        android:textSize="8dp"
+        android:layout_marginTop="46dp"
+        android:layout_alignTop="@+id/textView" />
 
 </LinearLayout>

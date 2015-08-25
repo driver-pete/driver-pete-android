@@ -3,17 +3,27 @@ package com.otognan.driverpete.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -28,6 +38,7 @@ import com.squareup.okhttp.OkHttpClient;
 
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +53,7 @@ import retrofit.mime.TypedByteArray;
 import retrofit.mime.TypedInput;
 
 
-public class MainActivity extends Activity implements
+public class MainActivity extends ActionBarActivity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
@@ -102,7 +113,101 @@ public class MainActivity extends Activity implements
     private TrajectoryEndpoint endpointA;
     private TrajectoryEndpoint endpointB;
 
+    private LogService logService;
+    private List<String> logCache = new ArrayList<String>();
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        Intent intent= new Intent(this, LogService.class);
+        bindService(intent, logServiceConnection, BIND_AUTO_CREATE);
+
+        setContentView(R.layout.activity_main);
+
+        this.updateLoginStatus();
+
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+
+        this.screenLog("Connecting to google api..\n");
+        mGoogleApiClient.connect();
+
+        final Handler timerHandler = new Handler();
+        class TimerRunnable implements Runnable {
+            @Override
+            public void run() {
+                if (MainActivity.this.currentTrajectory.size() > MINIMAL_TRAJECTORY_SIZE_TO_SEND) {
+                    MainActivity.this.serverAPI(SERVER_TIMEOUT_TO_CHECK_CONNECTIVITY).currentUser(new Callback<User>() {
+                        @Override
+                        public void success(User user, Response response) {
+                            try {
+                                MainActivity.this.sendToServer();
+                                MainActivity.this.screenLog("Sent to server by timer\n");
+                            } catch (Exception e) {
+                                MainActivity.this.screenLog("Not sending by timer - exception\n");
+                                e.printStackTrace();
+                            }
+                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
+                        }
+                        @Override
+                        public void failure(RetrofitError error) {
+                            MainActivity.this.screenLog("Not sending from timer - no connectivity\n");
+                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
+                        }
+                    });
+                } else {
+                    MainActivity.this.screenLog("Not sending from timer - too small\n");
+                    timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS * 1000);
+                }
+            }
+        };
+        timerHandler.postDelayed(new TimerRunnable(), SEND_DATA_EVERY_SECONDS * 1000);
+
+        this.refreshData();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu items for use in the action bar
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_login:
+                this.logIn();
+                return true;
+            case R.id.action_logout:
+                this.logOut();
+                return true;
+            case R.id.action_send_to_server:
+                try {
+                    this.sendToServer();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    this.showAlert("Failed to send to server", e.getMessage());
+                }
+                return true;
+            case R.id.action_refresh_data:
+                this.refreshData();
+                return true;
+            case R.id.action_reprocess_all_data:
+                this.reprocessAllData();
+                return true;
+            case R.id.action_show_log:
+                this.showLog();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         this.screenLog("GoogleApiClient connection has failed. Setting up fake messages..");
@@ -116,7 +221,7 @@ public class MainActivity extends Activity implements
                 location.setLatitude(34.34);
                 location.setLongitude(-117.02);
                 MainActivity.this.onLocationChanged(location);
-                timerHandler.postDelayed(this, 1000);
+                timerHandler.postDelayed(this, 10000);
             }
         };
         timerHandler.postDelayed(timerRunnable, 0);
@@ -125,6 +230,7 @@ public class MainActivity extends Activity implements
     @Override
     public void onLocationChanged(Location location) {
         Log.d(LOG_TAG, "Received location: " + Trajectory.locationToString(location));
+        this.screenLog(Trajectory.locationToShortString(location) + "\n");
         if (this.currentTrajectory.size() > 0) {
             Location lastLocaton = this.currentTrajectory.lastLocation();
             if (lastLocaton.distanceTo(location) < locationDistanceThreshold) {
@@ -158,89 +264,7 @@ public class MainActivity extends Activity implements
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setContentView(R.layout.activity_main);
-
-        TextView textView = (TextView) findViewById(R.id.textView);
-        textView.setMovementMethod(new ScrollingMovementMethod());
-
-        this.updateLoginStatus();
-
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
-
-        this.screenLog("Connecting to google api..\n");
-        mGoogleApiClient.connect();
-
-        final Handler timerHandler = new Handler();
-        class TimerRunnable implements Runnable {
-            @Override
-            public void run() {
-                if (MainActivity.this.currentTrajectory.size() > MINIMAL_TRAJECTORY_SIZE_TO_SEND) {
-                    MainActivity.this.serverAPI(SERVER_TIMEOUT_TO_CHECK_CONNECTIVITY).currentUser(new Callback<User>() {
-                        @Override
-                        public void success(User user, Response response) {
-                            try {
-                                MainActivity.this.sendToServer(null);
-                                MainActivity.this.screenLog("Sent to server by timer\n");
-                            } catch (Exception e) {
-                                MainActivity.this.screenLog("Not sending by timer - exception\n");
-                                e.printStackTrace();
-                            }
-                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
-                        }
-                        @Override
-                        public void failure(RetrofitError error) {
-                            MainActivity.this.screenLog("Not sending from timer - no connectivity\n");
-                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
-                        }
-                    });
-                } else {
-                    MainActivity.this.screenLog("Not sending from timer - too small\n");
-                    timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS * 1000);
-                }
-            }
-        };
-        timerHandler.postDelayed(new TimerRunnable(), SEND_DATA_EVERY_SECONDS * 1000);
-
-        this.refreshData();
-    }
-
-    public void sendZipMessage(View view) {
-
-        String filename = "gps.myfile";
-        try {
-            FileOutputStream dest = this.openFileOutput(filename, Context.MODE_WORLD_READABLE);
-            dest.write(this.currentTrajectory.compress());
-            dest.close();
-        } catch (Exception ex) {
-            Log.e(LOG_TAG, "Failed to compress file trajectory");
-            return;
-        }
-
-        Intent i = new Intent(Intent.ACTION_SEND);
-        i.setType("message/rfc822");
-        i.putExtra(Intent.EXTRA_EMAIL, new String[]{"otognan@gmail.com"});
-        i.putExtra(Intent.EXTRA_SUBJECT, "new Zip GPS");
-        i.putExtra(Intent.EXTRA_TEXT, "");
-
-        Uri fileUri = Uri.fromFile(getFileStreamPath(filename));
-        i.putExtra(Intent.EXTRA_STREAM, fileUri);
-
-        try {
-            startActivityForResult(Intent.createChooser(i, "Send zip mail..."), EMAIL_ACTIVITY_RESULT_ID);
-        } catch (android.content.ActivityNotFoundException ex) {
-            Toast.makeText(this, "There are no email clients installed.", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public void sendToServer(View view) throws Exception {
+    public void sendToServer() throws Exception {
         byte[] content = this.currentTrajectory.compress();
         byte[] encodedBytes = Base64.encode(content, Base64.DEFAULT);
         TypedInput in = new TypedByteArray("application/octet-stream", encodedBytes);
@@ -253,7 +277,7 @@ public class MainActivity extends Activity implements
                         ((TextView) findViewById(R.id.trajectoryStatus)).setText("Uploaded at " + label);
                         Location lastLocation = MainActivity.this.currentTrajectory.lastLocation();
                         MainActivity.this.currentTrajectory.clear();
-                        ((TextView) findViewById(R.id.textView)).setText("");
+                        MainActivity.this.clearLog();
                         //Re-add last location to preserve continuity in logic
                         MainActivity.this.currentTrajectory.addLocation(lastLocation);
                         MainActivity.this.screenLog(Trajectory.locationToShortString(lastLocation) + "\n");
@@ -267,8 +291,17 @@ public class MainActivity extends Activity implements
     }
 
     private void screenLog(String message) {
-        TextView textView = (TextView) findViewById(R.id.textView);
-        textView.append(message);
+        if (this.logService != null) {
+            this.logService.addLog(message);
+        } else {
+            this.logCache.add(message);
+        }
+    }
+
+    private void clearLog() {
+        if (this.logService != null) {
+            this.logService.clearLog();
+        }
     }
 
     @Override
@@ -320,13 +353,13 @@ public class MainActivity extends Activity implements
     }
 
 
-    public void logIn(View view) {
+    public void logIn() {
         Intent intent = new Intent(this, LoginActivity.class);
         intent.putExtra("serverUrl", serverUrl);
         this.startActivityForResult(intent, LOGIN_ACTIVITY_RESULT_ID);
     }
 
-    public void logOut(View view) {
+    public void logOut() {
         SharedPreferences settings = this.getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = settings.edit();
         editor.remove("token");
@@ -366,22 +399,19 @@ public class MainActivity extends Activity implements
 
     private void updateLoginStatus() {
         boolean loggedIn = this.getCurrentToken() != null;
+        final ActionBar actionBar = getSupportActionBar();
         if (loggedIn) {
-            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as ..");
-            findViewById(R.id.loginButton).setVisibility(View.INVISIBLE);
-            findViewById(R.id.logoutButton).setVisibility(View.VISIBLE);
+            actionBar.setTitle("logged in as ..");
             this.serverAPI().currentUser(new Callback<User>() {
                 @Override public void success(User user, Response response) {
-                    ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged in as " + user.getUsername());
+                    actionBar.setTitle("logged in as " + user.getUsername());
                 }
                 @Override public void failure(RetrofitError error) {
-                    ((TextView) findViewById(R.id.loginStatusTextView)).setText("login user failure");
+                    actionBar.setTitle("login user failure");
                 }
             });
         } else {
-            ((TextView) findViewById(R.id.loginStatusTextView)).setText("logged out.");
-            findViewById(R.id.loginButton).setVisibility(View.VISIBLE);
-            findViewById(R.id.logoutButton).setVisibility(View.INVISIBLE);
+            actionBar.setTitle("logged out.");
         }
     }
 
@@ -414,7 +444,7 @@ public class MainActivity extends Activity implements
        return restAdapter.create(DriverPeteServer.class);
     }
 
-    public void reprocessRequest(View view) {
+    public void reprocessAllData() {
         this.serverAPI().deleteProcessedUserData(new Callback<Response>() {
             @Override
             public void success(Response response, Response response2) {
@@ -449,11 +479,6 @@ public class MainActivity extends Activity implements
                 alertDialog.cancel();
             } });
         alertDialog.show();
-    }
-
-
-    public void onRefreshDataButton(View view) {
-        this.refreshData();
     }
 
     private void refreshData() {
@@ -537,7 +562,8 @@ public class MainActivity extends Activity implements
 
         this.serverAPI().editEndpoint(endpoint, new Callback<Response>() {
             @Override
-            public void success(Response response, Response response2) {}
+            public void success(Response response, Response response2) {
+            }
 
             @Override
             public void failure(RetrofitError error) {
@@ -545,4 +571,26 @@ public class MainActivity extends Activity implements
             }
         });
     }
+
+    private void showLog() {
+        this.startActivity(new Intent(this, LogActivity.class));
+    }
+
+    private ServiceConnection logServiceConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className,
+                                       IBinder binder) {
+            LogService.LogServiceBinder b = (LogService.LogServiceBinder) binder;
+            logService = b.getService();
+            for (String message: MainActivity.this.logCache) {
+                logService.addLog(message);
+            }
+            MainActivity.this.logCache.clear();
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            logService = null;
+        }
+    };
+
 }
