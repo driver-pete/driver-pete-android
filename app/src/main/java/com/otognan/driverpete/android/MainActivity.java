@@ -1,33 +1,29 @@
 package com.otognan.driverpete.android;
 
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,7 +32,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.squareup.okhttp.OkHttpClient;
 
-import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -483,6 +478,7 @@ public class MainActivity extends ActionBarActivity implements
 
     private void refreshData() {
         this.refreshEndpoints();
+        this.refreshRoutes();
     }
 
     private void refreshEndpoints() {
@@ -501,20 +497,20 @@ public class MainActivity extends ActionBarActivity implements
                 }
 
                 MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
-                        R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
-                MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
-                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
-            }
+                        R.id.    locationALabelText, R.id.locationAAddress, R.id.editAButton);
+    MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
+                                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+}
 
-            @Override
-            public void failure(RetrofitError error) {
-                MainActivity.this.showAlert("Failed to get endpoints", error.getMessage());
-            }
-        });
+    @Override
+    public void failure(RetrofitError error) {
+        MainActivity.this.showAlert("Failed to get endpoints", error.getMessage());
     }
+});
+        }
 
 
-    private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId ) {
+private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId ) {
         TextView labelText = ((TextView) findViewById(labelTextId));
         TextView addressText = ((TextView) findViewById(addressTextId));
         Button button = ((Button) findViewById(editButtonId));
@@ -592,5 +588,34 @@ public class MainActivity extends ActionBarActivity implements
             logService = null;
         }
     };
+
+
+    private void refreshRoutes() {
+        ListView routesListView = ((ListView)findViewById(R.id.routesAtoBListView));
+        //routesListView.add
+        // Defined Array values to show in ListView
+        String[] values = new String[] { "Android List View",
+                "Adapter implementation",
+                "Simple List View In Android",
+                "Create List View Android",
+                "Android Example",
+                "List View Source Code",
+                "List View Array Adapter",
+                "Android Example List View"
+        };
+
+        // Define a new Adapter
+        // First parameter - Context
+        // Second parameter - Layout for the row
+        // Third parameter - ID of the TextView to which the data is written
+        // Forth - the Array of data
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                android.R.layout.simple_list_item_1, android.R.id.text1, values);
+
+
+        // Assign adapter to ListView
+        routesListView.setAdapter(adapter);
+    }
 
 }
