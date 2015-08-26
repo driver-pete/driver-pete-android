@@ -42,5 +42,9 @@ public class Route {
     public void setFinishDate(Long finishDate) {
         this.finishDate = finishDate;
     }
+
+    public Long getDuration() {
+        return this.getFinishDate() - this.getStartDate();
+    }
 }
 

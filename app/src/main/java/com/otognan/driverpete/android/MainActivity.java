@@ -38,6 +38,8 @@ import com.squareup.okhttp.OkHttpClient;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -613,6 +615,12 @@ private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int
     }
 
     private void updateRoutesGui(boolean isAtoB, List<Route> routes) {
+
+        Collections.sort(routes, new Comparator<Route>() {
+            public int compare(Route o1, Route o2) {
+                return (int)(o1.getDuration() - o2.getDuration());
+            }
+        });
 
         ArrayAdapter<Route> adapter = new RouteArrayAdapter(this, routes);
 
