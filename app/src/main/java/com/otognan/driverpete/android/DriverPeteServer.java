@@ -26,7 +26,10 @@ public interface DriverPeteServer {
     public void editEndpoint(@Body TrajectoryEndpoint endpoint, Callback<Response> callback);
 
     @GET("/api/trajectory/routes")
-    public void routes(@Query("isAtoB") boolean isAtoB, Callback<List<String>> callback);
+    public void routes(@Query("isAtoB") boolean isAtoB, Callback<List<Route>> callback);
+
+    @GET("/api/trajectory/routes/binary")
+    public void binaryRoute(@Query("routeId") long routeId, Callback<Response> callback);
 
     @DELETE("/api/trajectory/state")
     public void resetProcessorState(Callback<Response> callback);

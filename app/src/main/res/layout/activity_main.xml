@@ -4,7 +4,8 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:weightSum="1">
 
 
     <RelativeLayout
@@ -94,7 +95,8 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="255dp">
+        android:layout_height="300dp"
+        android:layout_weight="0.66">
 
         <ListView
             android:layout_width="wrap_content"
@@ -113,6 +115,6 @@
         android:id="@+id/trajectoryStatus"
         android:textSize="8dp"
         android:layout_marginTop="46dp"
-        android:layout_alignTop="@+id/textView" />
+        android:layout_alignTop="@+id/routeItemTextView" />
 
 </LinearLayout>

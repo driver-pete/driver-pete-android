@@ -16,14 +16,18 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Base64;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -35,7 +39,9 @@ import com.squareup.okhttp.OkHttpClient;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import retrofit.Callback;
@@ -591,31 +597,72 @@ private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int
 
 
     private void refreshRoutes() {
-        ListView routesListView = ((ListView)findViewById(R.id.routesAtoBListView));
-        //routesListView.add
-        // Defined Array values to show in ListView
-        String[] values = new String[] { "Android List View",
-                "Adapter implementation",
-                "Simple List View In Android",
-                "Create List View Android",
-                "Android Example",
-                "List View Source Code",
-                "List View Array Adapter",
-                "Android Example List View"
-        };
+        final boolean isAtoB = true;
+        this.serverAPI().routes(isAtoB, new Callback<List<Route>>() {
+            @Override
+            public void success(List<Route> routes, Response response) {
+                MainActivity.this.updateRoutesGui(isAtoB, routes);
+            }
 
-        // Define a new Adapter
-        // First parameter - Context
-        // Second parameter - Layout for the row
-        // Third parameter - ID of the TextView to which the data is written
-        // Forth - the Array of data
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Failed to get routes", error.getMessage());
+            }
+        });
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, android.R.id.text1, values);
+    }
 
+    private void updateRoutesGui(boolean isAtoB, List<Route> routes) {
 
+        ArrayAdapter<Route> adapter = new RouteArrayAdapter(this, routes);
+
+        final ListView routesListView = (ListView)findViewById(R.id.routesAtoBListView);
         // Assign adapter to ListView
         routesListView.setAdapter(adapter);
+
+        routesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+
+                // ListView Clicked item index
+                int itemPosition = position;
+
+                // ListView Clicked item value
+                String itemValue = (String) routesListView.getItemAtPosition(position);
+
+                // Show Alert
+                Toast.makeText(getApplicationContext(),
+                        "Position :" + itemPosition + "  ListItem : " + itemValue, Toast.LENGTH_SHORT)
+                        .show();
+
+            }
+        });
     }
+
+    public class RouteArrayAdapter extends ArrayAdapter<Route> {
+
+        public RouteArrayAdapter(Context context, List<Route> values) {
+            super(context, R.layout.route_item_layout, values);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = getLayoutInflater();
+            View rowView = inflater.inflate(R.layout.route_item_layout, parent, false);
+            TextView durationTextView = (TextView) rowView.findViewById(R.id.routeItemDurationTextView);
+            long minDuration = (this.getItem(position).getFinishDate() - this.getItem(position).getStartDate())/1000/60;
+            durationTextView.setText(minDuration + " min");
+
+            TextView startTextView = (TextView) rowView.findViewById(R.id.routeItemStartTextView);
+            String startDate = new SimpleDateFormat("HH:mm", Locale.US).format(
+                    this.getItem(position).getStartDate());
+            startTextView.setText("Started at " + startDate);
+
+            return rowView;
+        }
+    }
+
 
 }
