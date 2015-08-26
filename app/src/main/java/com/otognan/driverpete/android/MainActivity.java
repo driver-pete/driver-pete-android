@@ -26,6 +26,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -123,7 +125,7 @@ public class MainActivity extends ActionBarActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent= new Intent(this, LogService.class);
+        Intent intent = new Intent(this, LogService.class);
         bindService(intent, logServiceConnection, BIND_AUTO_CREATE);
 
         setContentView(R.layout.activity_main);
@@ -154,12 +156,13 @@ public class MainActivity extends ActionBarActivity implements
                                 MainActivity.this.screenLog("Not sending by timer - exception\n");
                                 e.printStackTrace();
                             }
-                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
+                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS * 1000);
                         }
+
                         @Override
                         public void failure(RetrofitError error) {
                             MainActivity.this.screenLog("Not sending from timer - no connectivity\n");
-                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS*1000);
+                            timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS * 1000);
                         }
                     });
                 } else {
@@ -167,8 +170,31 @@ public class MainActivity extends ActionBarActivity implements
                     timerHandler.postDelayed(TimerRunnable.this, SEND_DATA_EVERY_SECONDS * 1000);
                 }
             }
-        };
+        }
+        ;
         timerHandler.postDelayed(new TimerRunnable(), SEND_DATA_EVERY_SECONDS * 1000);
+
+        RadioGroup routesRadioGroup = (RadioGroup) findViewById(R.id.routesRadioGroup);
+        routesRadioGroup.clearCheck();
+        routesRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                switch (checkedId) {
+                    case R.id.routeRadioAtoB:
+                        findViewById(R.id.routesAtoBListView).setVisibility(View.VISIBLE);
+                        findViewById(R.id.routesBtoAListView).setVisibility(View.INVISIBLE);
+                        break;
+                    case R.id.routeRadioBtoA:
+                        findViewById(R.id.routesAtoBListView).setVisibility(View.INVISIBLE);
+                        findViewById(R.id.routesBtoAListView).setVisibility(View.VISIBLE);
+                        break;
+                    default:
+                        findViewById(R.id.routesAtoBListView).setVisibility(View.INVISIBLE);
+                        findViewById(R.id.routesBtoAListView).setVisibility(View.INVISIBLE);
+                        break;
+                }
+            }
+        });
 
         this.refreshData();
     }
@@ -211,6 +237,7 @@ public class MainActivity extends ActionBarActivity implements
                 return super.onOptionsItemSelected(item);
         }
     }
+
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         this.screenLog("GoogleApiClient connection has failed. Setting up fake messages..");
@@ -237,11 +264,11 @@ public class MainActivity extends ActionBarActivity implements
         if (this.currentTrajectory.size() > 0) {
             Location lastLocaton = this.currentTrajectory.lastLocation();
             if (lastLocaton.distanceTo(location) < locationDistanceThreshold) {
-                Log.d(LOG_TAG,Trajectory.locationToShortString(location) + " is ignored");
+                Log.d(LOG_TAG, Trajectory.locationToShortString(location) + " is ignored");
                 if (!this.isInSleepMode) {
                     this.stationaryLocationsCounter += 1;
                     Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
-                    int stepsCounter = STATIONARY_LOCATION_SWITCH_THRESHOLD_SECONDS/UPDATE_INTERVAL_IN_SECONDS;
+                    int stepsCounter = STATIONARY_LOCATION_SWITCH_THRESHOLD_SECONDS / UPDATE_INTERVAL_IN_SECONDS;
                     if (this.stationaryLocationsCounter > stepsCounter) {
                         this.subscribeToLocations(true);
                     }
@@ -373,7 +400,7 @@ public class MainActivity extends ActionBarActivity implements
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == LOGIN_ACTIVITY_RESULT_ID) {
-            if(resultCode == RESULT_OK){
+            if (resultCode == RESULT_OK) {
                 String token = data.getStringExtra("token");
                 SharedPreferences settings = this.getPreferences(Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = settings.edit();
@@ -386,7 +413,7 @@ public class MainActivity extends ActionBarActivity implements
             }
 
             updateLoginStatus();
-        } else if (requestCode ==  EMAIL_ACTIVITY_RESULT_ID) {
+        } else if (requestCode == EMAIL_ACTIVITY_RESULT_ID) {
             Log.d(LOG_TAG, "Email result: " + Integer.toString(resultCode));
         } else if (requestCode == EDIT_ENDPOINT_ACTIVITY_RESULT_ID) {
             if (resultCode == RESULT_OK) {
@@ -406,10 +433,13 @@ public class MainActivity extends ActionBarActivity implements
         if (loggedIn) {
             actionBar.setTitle("logged in as ..");
             this.serverAPI().currentUser(new Callback<User>() {
-                @Override public void success(User user, Response response) {
+                @Override
+                public void success(User user, Response response) {
                     actionBar.setTitle("logged in as " + user.getUsername());
                 }
-                @Override public void failure(RetrofitError error) {
+
+                @Override
+                public void failure(RetrofitError error) {
                     actionBar.setTitle("login user failure");
                 }
             });
@@ -444,7 +474,7 @@ public class MainActivity extends ActionBarActivity implements
                 .build();
 
 
-       return restAdapter.create(DriverPeteServer.class);
+        return restAdapter.create(DriverPeteServer.class);
     }
 
     public void reprocessAllData() {
@@ -480,7 +510,8 @@ public class MainActivity extends ActionBarActivity implements
         alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int which) {
                 alertDialog.cancel();
-            } });
+            }
+        });
         alertDialog.show();
     }
 
@@ -505,20 +536,26 @@ public class MainActivity extends ActionBarActivity implements
                 }
 
                 MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
-                        R.id.    locationALabelText, R.id.locationAAddress, R.id.editAButton);
-    MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
-                                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
-}
+                        R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
+                MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
+                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+            }
 
-    @Override
-    public void failure(RetrofitError error) {
-        MainActivity.this.showAlert("Failed to get endpoints", error.getMessage());
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Failed to get endpoints", error.getMessage());
+                MainActivity.this.endpointA = null;
+                MainActivity.this.endpointB = null;
+                MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
+                        R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
+                MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
+                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+            }
+        });
     }
-});
-        }
 
 
-private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId ) {
+    private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId) {
         TextView labelText = ((TextView) findViewById(labelTextId));
         TextView addressText = ((TextView) findViewById(addressTextId));
         Button button = ((Button) findViewById(editButtonId));
@@ -552,7 +589,7 @@ private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int
 
     private void onEndpointEditingFinished(Intent data) {
         boolean isLocationA = data.getBooleanExtra("isLocationA", true);
-        TrajectoryEndpoint endpoint = isLocationA ? this.endpointA: this.endpointB;
+        TrajectoryEndpoint endpoint = isLocationA ? this.endpointA : this.endpointB;
         endpoint.setLabel(data.getStringExtra("label"));
         endpoint.setAddress(data.getStringExtra("address"));
 
@@ -563,6 +600,11 @@ private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int
             MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
                     R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
         }
+
+        ((RadioButton)findViewById(R.id.routeRadioAtoB)).setText(
+                this.endpointA.getLabel() + " to " + this.endpointB.getLabel());
+        ((RadioButton)findViewById(R.id.routeRadioBtoA)).setText(
+                this.endpointB.getLabel() + " to " + this.endpointA.getLabel());
 
         this.serverAPI().editEndpoint(endpoint, new Callback<Response>() {
             @Override
@@ -586,7 +628,7 @@ private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int
                                        IBinder binder) {
             LogService.LogServiceBinder b = (LogService.LogServiceBinder) binder;
             logService = b.getService();
-            for (String message: MainActivity.this.logCache) {
+            for (String message : MainActivity.this.logCache) {
                 logService.addLog(message);
             }
             MainActivity.this.logCache.clear();
@@ -599,54 +641,87 @@ private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int
 
 
     private void refreshRoutes() {
-        final boolean isAtoB = true;
-        this.serverAPI().routes(isAtoB, new Callback<List<Route>>() {
-            @Override
-            public void success(List<Route> routes, Response response) {
-                MainActivity.this.updateRoutesGui(isAtoB, routes);
-            }
 
+        this.serverAPI().routes(true, new Callback<List<Route>>() {
+            @Override
+            public void success(final List<Route> routesAtoB, Response response) {
+
+                MainActivity.this.serverAPI().routes(false, new Callback<List<Route>>() {
+                    @Override
+                    public void success(List<Route> routesBtoA, Response response) {
+
+                        MainActivity.this.updateRoutesGui(routesAtoB, routesBtoA);
+                    }
+                    @Override
+                    public void failure(RetrofitError error) {
+                        MainActivity.this.showAlert("Failed to get B to A routes", error.getMessage());
+                    }
+                });
+            }
             @Override
             public void failure(RetrofitError error) {
-                MainActivity.this.showAlert("Failed to get routes", error.getMessage());
+                MainActivity.this.showAlert("Failed to get A to B routes", error.getMessage());
             }
         });
 
     }
 
-    private void updateRoutesGui(boolean isAtoB, List<Route> routes) {
+    private void updateRoutesGui(List<Route> routesAtoB, List<Route> routesBtoA) {
 
-        Collections.sort(routes, new Comparator<Route>() {
-            public int compare(Route o1, Route o2) {
-                return (int)(o1.getDuration() - o2.getDuration());
+        boolean routesFound = (routesAtoB.size() > 0 || routesBtoA.size() > 0);
+        findViewById(R.id.noRoutesFoundTextView).setVisibility(!routesFound? View.VISIBLE:View.INVISIBLE);
+        findViewById(R.id.routesRadioLayout).setVisibility(routesFound ? View.VISIBLE : View.INVISIBLE);
+
+        RadioGroup routesRadioGroup = (RadioGroup) findViewById(R.id.routesRadioGroup);
+        if (!routesFound) {
+            // uncheck radio group to be able to determine the state whether routes
+            // just appeared or they existed and there is no need to change check state
+            routesRadioGroup.check(-1);
+            return;
+        }
+
+        Route.sortByDuration(routesAtoB);
+        Route.sortByDuration(routesBtoA);
+
+        ListView routesAtoBListView = (ListView) findViewById(R.id.routesAtoBListView);
+        routesAtoBListView.setAdapter(new RouteArrayAdapter(this, routesAtoB));
+
+        ListView routesBtoAListView = (ListView) findViewById(R.id.routesBtoAListView);
+        routesBtoAListView.setAdapter(new RouteArrayAdapter(this, routesBtoA));
+
+        ((RadioButton)findViewById(R.id.routeRadioAtoB)).setText(
+                this.endpointA.getLabel()+" to " + this.endpointB.getLabel());
+        ((RadioButton)findViewById(R.id.routeRadioBtoA)).setText(
+                this.endpointB.getLabel()+" to " + this.endpointA.getLabel());
+
+        if (routesRadioGroup.getCheckedRadioButtonId() == -1) {
+            if (routesAtoB.size() > 0) {
+                routesRadioGroup.check(R.id.routeRadioAtoB);
+            } else {
+                routesRadioGroup.check(R.id.routeRadioBtoA);
             }
-        });
+        }
 
-        ArrayAdapter<Route> adapter = new RouteArrayAdapter(this, routes);
 
-        final ListView routesListView = (ListView)findViewById(R.id.routesAtoBListView);
-        // Assign adapter to ListView
-        routesListView.setAdapter(adapter);
-
-        routesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-
-                // ListView Clicked item index
-                int itemPosition = position;
-
-                // ListView Clicked item value
-                String itemValue = (String) routesListView.getItemAtPosition(position);
-
-                // Show Alert
-                Toast.makeText(getApplicationContext(),
-                        "Position :" + itemPosition + "  ListItem : " + itemValue, Toast.LENGTH_SHORT)
-                        .show();
-
-            }
-        });
+//        routesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view,
+//                                    int position, long id) {
+//
+//                // ListView Clicked item index
+//                int itemPosition = position;
+//
+//                // ListView Clicked item value
+//                String itemValue = (String) routesListView.getItemAtPosition(position);
+//
+//                // Show Alert
+//                Toast.makeText(getApplicationContext(),
+//                        "Position :" + itemPosition + "  ListItem : " + itemValue, Toast.LENGTH_SHORT)
+//                        .show();
+//
+//            }
+//        });
     }
 
     public class RouteArrayAdapter extends ArrayAdapter<Route> {
@@ -660,7 +735,7 @@ private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int
             LayoutInflater inflater = getLayoutInflater();
             View rowView = inflater.inflate(R.layout.route_item_layout, parent, false);
             TextView durationTextView = (TextView) rowView.findViewById(R.id.routeItemDurationTextView);
-            long minDuration = (this.getItem(position).getFinishDate() - this.getItem(position).getStartDate())/1000/60;
+            long minDuration = (this.getItem(position).getFinishDate() - this.getItem(position).getStartDate()) / 1000 / 60;
             durationTextView.setText(minDuration + " min");
 
             TextView startTextView = (TextView) rowView.findViewById(R.id.routeItemStartTextView);

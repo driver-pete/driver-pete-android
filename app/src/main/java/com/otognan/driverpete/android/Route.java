@@ -1,6 +1,10 @@
 package com.otognan.driverpete.android;
 
 
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 public class Route {
 
     private Long id;
@@ -45,6 +49,14 @@ public class Route {
 
     public Long getDuration() {
         return this.getFinishDate() - this.getStartDate();
+    }
+
+    public static void sortByDuration(List<Route> routes) {
+        Collections.sort(routes, new Comparator<Route>() {
+            public int compare(Route o1, Route o2) {
+                return (int) (o1.getDuration() - o2.getDuration());
+            }
+        });
     }
 }
 
