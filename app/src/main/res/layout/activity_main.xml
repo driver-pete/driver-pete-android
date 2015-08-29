@@ -208,4 +208,10 @@
         android:layout_height="1dp"
         android:background="@android:color/darker_gray"/>
 
+    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+        android:name="com.google.android.gms.maps.MapFragment"
+        android:id="@+id/routeMap2"
+        android:layout_width="match_parent"
+        android:layout_height="297dp"/>
+
 </LinearLayout>

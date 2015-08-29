@@ -36,6 +36,11 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.squareup.okhttp.OkHttpClient;
 
 import java.text.SimpleDateFormat;
@@ -57,6 +62,11 @@ import retrofit.client.Response;
 import retrofit.mime.TypedByteArray;
 import retrofit.mime.TypedInput;
 
+/*
+app signing:
+https://developer.android.com/tools/publishing/app-signing.html#debugmode
+ */
+
 
 public class MainActivity extends ActionBarActivity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -64,8 +74,6 @@ public class MainActivity extends ActionBarActivity implements
         LocationListener {
 
     private static final String LOG_TAG = "MainActivity";
-    private static final String serverUrl = "https://192.168.1.2:8443";
-    //private static final String serverUrl = "https://testbeanstalkenv-taz59dxmiu.elasticbeanstalk.com";
 
     private static final double locationDistanceThreshold = 50.;
 
@@ -97,6 +105,7 @@ public class MainActivity extends ActionBarActivity implements
     private static final int LOGIN_ACTIVITY_RESULT_ID = 1;
     private static final int EMAIL_ACTIVITY_RESULT_ID = 2;
     private static final int EDIT_ENDPOINT_ACTIVITY_RESULT_ID = 3;
+    private static final int ROUTE_DETAILS_ACTIVITY_RESULT_ID = 4;
 
     // Define an object that holds accuracy and frequency parameters
     private GoogleApiClient mGoogleApiClient;
@@ -195,6 +204,23 @@ public class MainActivity extends ActionBarActivity implements
                 }
             }
         });
+
+        ListView.OnItemClickListener routesListOnClickListener = new ListView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view,
+                                    int position, long id) {
+                Route route = (Route) parent.getItemAtPosition(position);
+                Intent intent = new Intent(MainActivity.this, RouteDetailsActivity.class);
+                intent.putExtra("token", MainActivity.this.getCurrentToken());
+                intent.putExtra("routeId", route.getId());
+                intent.putExtra("routeStartDate", route.getStartDate());
+                intent.putExtra("routeFinishDate", route.getFinishDate());
+                MainActivity.this.startActivityForResult(intent, ROUTE_DETAILS_ACTIVITY_RESULT_ID);
+            }
+        };
+
+        ((ListView)findViewById(R.id.routesAtoBListView)).setOnItemClickListener(routesListOnClickListener);
+        ((ListView)findViewById(R.id.routesBtoAListView)).setOnItemClickListener(routesListOnClickListener);
 
         this.refreshData();
     }
@@ -338,6 +364,17 @@ public class MainActivity extends ActionBarActivity implements
     public void onConnected(Bundle bundle) {
         this.screenLog("Location services connected\n");
         subscribeToLocations(false);
+
+        MapFragment mapFragment = (MapFragment) getFragmentManager()
+                .findFragmentById(R.id.routeMap);
+        mapFragment.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap googleMap) {
+                googleMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(0, 0))
+                        .title("Marker"));
+            }
+        });
     }
 
     private void subscribeToLocations(boolean sleepMode) {
@@ -385,7 +422,7 @@ public class MainActivity extends ActionBarActivity implements
 
     public void logIn() {
         Intent intent = new Intent(this, LoginActivity.class);
-        intent.putExtra("serverUrl", serverUrl);
+        intent.putExtra("serverUrl", DriverPeteServerInstance.serverUrl);
         this.startActivityForResult(intent, LOGIN_ACTIVITY_RESULT_ID);
     }
 
@@ -454,27 +491,7 @@ public class MainActivity extends ActionBarActivity implements
 
     private DriverPeteServer serverAPI(int timeoutSeconds) {
         final String token = this.getCurrentToken();
-        RequestInterceptor requestInterceptor = new RequestInterceptor() {
-            @Override
-            public void intercept(RequestFacade request) {
-                request.addHeader("X-AUTH-TOKEN", token);
-            }
-        };
-
-        OkHttpClient httpClient = UnsafeHttpsClient.getUnsafeOkHttpClient();
-        if (timeoutSeconds != 0) {
-            httpClient.setReadTimeout(timeoutSeconds, TimeUnit.SECONDS);
-            httpClient.setConnectTimeout(timeoutSeconds, TimeUnit.SECONDS);
-        }
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setEndpoint(serverUrl)
-                .setLogLevel(RestAdapter.LogLevel.FULL)
-                .setClient(new OkClient(httpClient))
-                .setRequestInterceptor(requestInterceptor)
-                .build();
-
-
-        return restAdapter.create(DriverPeteServer.class);
+        return DriverPeteServerInstance.getInstance(token, timeoutSeconds);
     }
 
     public void reprocessAllData() {
@@ -702,26 +719,6 @@ public class MainActivity extends ActionBarActivity implements
             }
         }
 
-
-//        routesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//
-//            @Override
-//            public void onItemClick(AdapterView<?> parent, View view,
-//                                    int position, long id) {
-//
-//                // ListView Clicked item index
-//                int itemPosition = position;
-//
-//                // ListView Clicked item value
-//                String itemValue = (String) routesListView.getItemAtPosition(position);
-//
-//                // Show Alert
-//                Toast.makeText(getApplicationContext(),
-//                        "Position :" + itemPosition + "  ListItem : " + itemValue, Toast.LENGTH_SHORT)
-//                        .show();
-//
-//            }
-//        });
     }
 
     public class RouteArrayAdapter extends ArrayAdapter<Route> {
