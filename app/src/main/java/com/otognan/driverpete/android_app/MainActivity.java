@@ -36,6 +36,7 @@ import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -198,9 +199,11 @@ public class MainActivity extends ActionBarActivity implements
                 Route route = (Route) parent.getItemAtPosition(position);
                 Intent intent = new Intent(MainActivity.this, RouteDetailsActivity.class);
                 intent.putExtra("token", MainActivity.this.getCurrentToken());
-                intent.putExtra("routeId", route.getId());
-                intent.putExtra("routeStartDate", route.getStartDate());
-                intent.putExtra("routeFinishDate", route.getFinishDate());
+                intent.putExtra("route", route);
+                intent.putExtra("routeFrom",
+                        route.getDirectionAtoB()?MainActivity.this.endpointA:MainActivity.this.endpointB);
+                intent.putExtra("routeTo",
+                        route.getDirectionAtoB()?MainActivity.this.endpointB:MainActivity.this.endpointA);
                 MainActivity.this.startActivityForResult(intent, ROUTE_DETAILS_ACTIVITY_RESULT_ID);
             }
         };
@@ -508,11 +511,6 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     private void refreshData() {
-        this.refreshEndpoints();
-        this.refreshRoutes();
-    }
-
-    private void refreshEndpoints() {
         this.serverAPI().trajectoryEndpoints(new Callback<List<TrajectoryEndpoint>>() {
             @Override
             public void success(List<TrajectoryEndpoint> trajectoryEndpoints, Response response) {
@@ -531,6 +529,9 @@ public class MainActivity extends ActionBarActivity implements
                         R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
                 MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
                         R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+
+                // now endpoints are loaded, we can refresh routes
+                MainActivity.this.refreshRoutes();
             }
 
             @Override
@@ -545,7 +546,6 @@ public class MainActivity extends ActionBarActivity implements
             }
         });
     }
-
 
     private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId) {
         TextView labelText = ((TextView) findViewById(labelTextId));

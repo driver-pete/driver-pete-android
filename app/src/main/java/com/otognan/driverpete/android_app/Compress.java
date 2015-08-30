@@ -21,18 +21,12 @@ public class Compress {
         return obj.toByteArray();
     }
 
-    public static String decompress(byte[] inputBytes) throws Exception {
+    public static BufferedReader decompress(byte[] inputBytes) throws Exception {
         if (inputBytes == null) {
             return null;
         }
         GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(inputBytes));
-        BufferedReader bf = new BufferedReader(new InputStreamReader(gis, "UTF-8"));
-        String outStr = "";
-        String line;
-        while ((line=bf.readLine())!=null) {
-            outStr += line;
-        }
-        return outStr;
+        return new BufferedReader(new InputStreamReader(gis, "UTF-8"));
     }
 
 }

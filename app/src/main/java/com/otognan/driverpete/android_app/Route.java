@@ -1,11 +1,12 @@
 package com.otognan.driverpete.android_app;
 
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class Route {
+public class Route implements Serializable{
 
     private Long id;
 

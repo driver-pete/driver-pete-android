@@ -1,7 +1,9 @@
 package com.otognan.driverpete.android_app;
 
 
-public class TrajectoryEndpoint {
+import java.io.Serializable;
+
+public class TrajectoryEndpoint implements Serializable {
     private Long id;
 
     private double latitude;
