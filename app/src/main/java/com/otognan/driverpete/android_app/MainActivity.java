@@ -35,11 +35,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -355,17 +350,6 @@ public class MainActivity extends ActionBarActivity implements
     public void onConnected(Bundle bundle) {
         this.screenLog("Location services connected\n");
         subscribeToLocations(false);
-
-        MapFragment mapFragment = (MapFragment) getFragmentManager()
-                .findFragmentById(R.id.routeMap);
-        mapFragment.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                googleMap.addMarker(new MarkerOptions()
-                        .position(new LatLng(0, 0))
-                        .title("Marker"));
-            }
-        });
     }
 
     private void subscribeToLocations(boolean sleepMode) {
