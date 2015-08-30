@@ -1,4 +1,4 @@
-package com.otognan.driverpete.android;
+package com.otognan.driverpete.android_app;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
