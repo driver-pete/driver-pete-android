@@ -248,6 +248,9 @@ public class MainActivity extends ActionBarActivity implements
             case R.id.action_show_log:
                 this.showLog();
                 return true;
+            case R.id.action_reprocess_all_routes:
+                this.reprocessAllRoutes();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -326,6 +329,7 @@ public class MainActivity extends ActionBarActivity implements
                         //Re-add last location to preserve continuity in logic
                         MainActivity.this.currentTrajectory.addLocation(lastLocation);
                         MainActivity.this.screenLog(Trajectory.locationToShortString(lastLocation) + "\n");
+                        MainActivity.this.refreshData();
                     }
 
                     @Override
@@ -380,7 +384,6 @@ public class MainActivity extends ActionBarActivity implements
         } else {
             locationRequest.setInterval(UPDATE_INTERVAL);
         }
-
 
         // Set the fastest update interval
         if (sleepMode) {
@@ -451,11 +454,12 @@ public class MainActivity extends ActionBarActivity implements
                 @Override
                 public void success(User user, Response response) {
                     actionBar.setTitle("logged in as " + user.getUsername());
+                    MainActivity.this.refreshData();
                 }
-
                 @Override
                 public void failure(RetrofitError error) {
                     actionBar.setTitle("login user failure");
+                    MainActivity.this.refreshData();
                 }
             });
         } else {
@@ -472,6 +476,30 @@ public class MainActivity extends ActionBarActivity implements
         return DriverPeteServerInstance.getInstance(token, timeoutSeconds);
     }
 
+    public void reprocessAllRoutes() {
+        this.serverAPI().deleteAllRoutes(new Callback<Response>() {
+            @Override
+            public void success(Response response, Response response2) {
+                MainActivity.this.serverAPI().reprocessAllUserData(new Callback<Response>() {
+                    @Override
+                    public void success(Response returnResponse, Response response) {
+                        MainActivity.this.refreshData();
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        MainActivity.this.showAlert("Processing routes error", error.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Delete routes error", error.getMessage());
+            }
+        });
+    }
+
     public void reprocessAllData() {
         this.serverAPI().deleteProcessedUserData(new Callback<Response>() {
             @Override
@@ -480,6 +508,7 @@ public class MainActivity extends ActionBarActivity implements
                     @Override
                     public void success(Response returnResponse, Response response) {
                         MainActivity.this.showAlert("Processing is done", "Everything is fine");
+                        MainActivity.this.refreshData();
                     }
 
                     @Override
@@ -565,25 +594,38 @@ public class MainActivity extends ActionBarActivity implements
 
     public void editAEndpoint(View view) {
         Intent intent = new Intent(this, EndpointEditorActivity.class);
-        intent.putExtra("label", ((TextView) findViewById(R.id.locationALabelText)).getText());
-        intent.putExtra("address", ((TextView) findViewById(R.id.locationAAddress)).getText());
+        intent.putExtra("endpoint", this.endpointA);
         intent.putExtra("isLocationA", true);
         this.startActivityForResult(intent, EDIT_ENDPOINT_ACTIVITY_RESULT_ID);
     }
 
     public void editBEndpoint(View view) {
         Intent intent = new Intent(this, EndpointEditorActivity.class);
-        intent.putExtra("label", ((TextView) findViewById(R.id.locationBLabelText)).getText());
-        intent.putExtra("address", ((TextView) findViewById(R.id.locationBAddress)).getText());
+        intent.putExtra("endpoint", this.endpointB);
         intent.putExtra("isLocationA", false);
         this.startActivityForResult(intent, EDIT_ENDPOINT_ACTIVITY_RESULT_ID);
     }
 
     private void onEndpointEditingFinished(Intent data) {
         boolean isLocationA = data.getBooleanExtra("isLocationA", true);
-        TrajectoryEndpoint endpoint = isLocationA ? this.endpointA : this.endpointB;
-        endpoint.setLabel(data.getStringExtra("label"));
-        endpoint.setAddress(data.getStringExtra("address"));
+        TrajectoryEndpoint existingEndpoint = isLocationA ? this.endpointA : this.endpointB;
+
+        TrajectoryEndpoint proposedEndpoint = (TrajectoryEndpoint)data.getSerializableExtra("endpoint");
+
+        existingEndpoint.setLabel(proposedEndpoint.getLabel());
+        existingEndpoint.setAddress(proposedEndpoint.getAddress());
+
+
+        float[] distances = {0.f};
+        Location.distanceBetween(
+                existingEndpoint.getLatitude(), existingEndpoint.getLongitude(),
+                proposedEndpoint.getLatitude(), proposedEndpoint.getLongitude(),
+                distances);
+
+        // we need to recompute all routes if endpoint location is shifted
+        final boolean endpointShifted = distances[0] > 50;
+        existingEndpoint.setLatitude(proposedEndpoint.getLatitude());
+        existingEndpoint.setLongitude(proposedEndpoint.getLongitude());
 
         if (isLocationA) {
             MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
@@ -598,9 +640,14 @@ public class MainActivity extends ActionBarActivity implements
         ((RadioButton)findViewById(R.id.routeRadioBtoA)).setText(
                 this.endpointB.getLabel() + " to " + this.endpointA.getLabel());
 
-        this.serverAPI().editEndpoint(endpoint, new Callback<Response>() {
+        this.serverAPI().editEndpoint(existingEndpoint, new Callback<Response>() {
             @Override
             public void success(Response response, Response response2) {
+                if (endpointShifted) {
+                    MainActivity.this.reprocessAllRoutes();
+                } else {
+                    MainActivity.this.refreshData();
+                }
             }
 
             @Override
