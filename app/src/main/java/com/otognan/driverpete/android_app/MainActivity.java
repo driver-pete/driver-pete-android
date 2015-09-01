@@ -507,6 +507,7 @@ public class MainActivity extends ActionBarActivity implements
         this.serverAPI().deleteAllEndpoints(new Callback<Response>() {
             @Override
             public void success(Response response, Response response2) {
+                MainActivity.this.refreshData();
                 MainActivity.this.serverAPI().reprocessAllUserData(false, new Callback<Response>() {
                     @Override
                     public void success(Response returnResponse, Response response) {
@@ -531,6 +532,8 @@ public class MainActivity extends ActionBarActivity implements
         this.serverAPI().deleteAllRoutes(new Callback<Response>() {
             @Override
             public void success(Response response, Response response2) {
+                MainActivity.this.clearRoutesGUI();
+                ((TextView) findViewById(R.id.notReadyTextView)).setText("Loading routes..");
                 MainActivity.this.serverAPI().reprocessAllUserData(true, new Callback<Response>() {
                     @Override
                     public void success(Response returnResponse, Response response) {
@@ -624,7 +627,7 @@ public class MainActivity extends ActionBarActivity implements
             } else {
                 ((TextView) findViewById(R.id.notReadyTextView)).setText(this.SINGLE_ENDPOINT_ONLY_MESSAGE);
             }
-            MainActivity.this.updateRoutesGui(new ArrayList<Route>(), new ArrayList<Route>());
+            MainActivity.this.clearRoutesGUI();
         } else {
             // now endpoints are loaded, we can refresh routes
             ((TextView) findViewById(R.id.notReadyTextView)).setText("Loading routes..");
@@ -663,7 +666,7 @@ public class MainActivity extends ActionBarActivity implements
                 distances);
 
         // we need to recompute all routes if endpoint location is shifted
-        final boolean endpointShifted = distances[0] > 50;
+        final boolean endpointShifted = distances[0] > 200;
         existingEndpoint.setLatitude(proposedEndpoint.getLatitude());
         existingEndpoint.setLongitude(proposedEndpoint.getLongitude());
 
@@ -782,6 +785,10 @@ public class MainActivity extends ActionBarActivity implements
             }
         }
 
+    }
+
+    private void clearRoutesGUI() {
+        this.updateRoutesGui(new ArrayList<Route>(), new ArrayList<Route>());
     }
 
     public class RouteArrayAdapter extends ArrayAdapter<Route> {

@@ -45,12 +45,9 @@ public class EndpointEditorActivity extends ActionBarActivity
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 if (actionId == EditorInfo.IME_ACTION_SEARCH ||
-                        actionId == EditorInfo.IME_ACTION_DONE ||
-                        event.getAction() == KeyEvent.ACTION_DOWN &&
-                                event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-                    if (!event.isShiftPressed()) {
-
-
+                        actionId == EditorInfo.IME_ACTION_DONE) {
+                    if (event == null || (event.getAction() == KeyEvent.ACTION_DOWN &&
+                            event.getKeyCode() == KeyEvent.KEYCODE_ENTER && !event.isShiftPressed())) {
                         Geocoder geo = new Geocoder(EndpointEditorActivity.this.getApplicationContext(), Locale.getDefault());
                         try {
                             List<Address> addresses = geo.getFromLocationName(addressEditText.getText().toString(), 1);
@@ -65,8 +62,6 @@ public class EndpointEditorActivity extends ActionBarActivity
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-
-                        return true;
                     }
                 }
                 return false; // pass on to other listeners.
@@ -82,10 +77,9 @@ public class EndpointEditorActivity extends ActionBarActivity
 
     public void onSubmitButton(View view) {
         Intent returnIntent = new Intent();
-        TrajectoryEndpoint endpoint = new TrajectoryEndpoint();
-        endpoint.setLabel(((EditText) findViewById(R.id.locationLabelEditText)).getText().toString());
-        endpoint.setAddress(((EditText) findViewById(R.id.locationAddressLabelText)).getText().toString());
-        returnIntent.putExtra("endpoint", endpoint);
+        this.endpoint.setLabel(((EditText) findViewById(R.id.locationLabelEditText)).getText().toString());
+        this.endpoint.setAddress(((EditText) findViewById(R.id.locationAddressLabelText)).getText().toString());
+        returnIntent.putExtra("endpoint", this.endpoint);
         returnIntent.putExtra("isLocationA", this.isLocationA);
         setResult(RESULT_OK, returnIntent);
         this.finish();
@@ -96,7 +90,7 @@ public class EndpointEditorActivity extends ActionBarActivity
         this.currentMap = map;
         map.clear();
         LatLng latLng = new LatLng(this.endpoint.getLatitude(), this.endpoint.getLongitude());
-        map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14));
 
         map.addMarker(new MarkerOptions()
                         .position(latLng)

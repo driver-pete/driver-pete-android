@@ -207,7 +207,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="NOT READY"
+            android:text="Loading..."
             android:id="@+id/notReadyTextView"
             android:gravity="center_horizontal"
             android:layout_centerHorizontal="true" />
