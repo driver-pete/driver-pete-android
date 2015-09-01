@@ -117,6 +117,10 @@ public class MainActivity extends ActionBarActivity implements
     private LogService logService;
     private List<String> logCache = new ArrayList<String>();
 
+    private static String NO_ENDPOINTS_MESSAGE = "No endpoints were found yet.\n Please keep driving with the application running in the background.";
+    private static String SINGLE_ENDPOINT_ONLY_MESSAGE = "We need to find two endpoints.\n Please keep driving with the application running in the background.";
+    private static String NO_ROUTES_MESSAGE = "No routes between two endpoints were found yet.\n Please keep driving with the application running in the background.";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -211,7 +215,6 @@ public class MainActivity extends ActionBarActivity implements
         ((ListView)findViewById(R.id.routesAtoBListView)).setOnItemClickListener(routesListOnClickListener);
         ((ListView)findViewById(R.id.routesBtoAListView)).setOnItemClickListener(routesListOnClickListener);
 
-        this.refreshData();
     }
 
     @Override
@@ -226,7 +229,7 @@ public class MainActivity extends ActionBarActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_login:
-                this.logIn();
+                this.logIn(null);
                 return true;
             case R.id.action_logout:
                 this.logOut();
@@ -242,14 +245,17 @@ public class MainActivity extends ActionBarActivity implements
             case R.id.action_refresh_data:
                 this.refreshData();
                 return true;
-            case R.id.action_reprocess_all_data:
-                this.reprocessAllData();
-                return true;
             case R.id.action_show_log:
                 this.showLog();
                 return true;
             case R.id.action_reprocess_all_routes:
                 this.reprocessAllRoutes();
+                return true;
+            case R.id.action_reprocess_all_endpoints:
+                this.reprocessAllEndpoints();
+                return true;
+            case R.id.action_delete_all_endpoints:
+                this.deleteAllEndpoints();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -400,8 +406,7 @@ public class MainActivity extends ActionBarActivity implements
         this.screenLog("GoogleApiClient connection has been suspend");
     }
 
-
-    public void logIn() {
+    public void logIn(View viev) {
         Intent intent = new Intent(this, LoginActivity.class);
         intent.putExtra("serverUrl", DriverPeteServerInstance.serverUrl);
         this.startActivityForResult(intent, LOGIN_ACTIVITY_RESULT_ID);
@@ -446,6 +451,9 @@ public class MainActivity extends ActionBarActivity implements
     }
 
     private void updateLoginStatus() {
+        findViewById(R.id.loggedInLayout).setVisibility(View.GONE);
+        findViewById(R.id.loggedOutLayout).setVisibility(View.GONE);
+
         boolean loggedIn = this.getCurrentToken() != null;
         final ActionBar actionBar = getSupportActionBar();
         if (loggedIn) {
@@ -455,15 +463,20 @@ public class MainActivity extends ActionBarActivity implements
                 public void success(User user, Response response) {
                     actionBar.setTitle("logged in as " + user.getUsername());
                     MainActivity.this.refreshData();
+                    findViewById(R.id.loggedOutLayout).setVisibility(View.GONE);
+                    findViewById(R.id.loggedInLayout).setVisibility(View.VISIBLE);
                 }
                 @Override
                 public void failure(RetrofitError error) {
                     actionBar.setTitle("login user failure");
-                    MainActivity.this.refreshData();
+                    MainActivity.this.showAlert("Login failure", error.getMessage());
+                    findViewById(R.id.loggedInLayout).setVisibility(View.GONE);
+                    findViewById(R.id.loggedOutLayout).setVisibility(View.VISIBLE);
                 }
             });
         } else {
             actionBar.setTitle("logged out.");
+            findViewById(R.id.loggedOutLayout).setVisibility(View.VISIBLE);
         }
     }
 
@@ -476,11 +489,49 @@ public class MainActivity extends ActionBarActivity implements
         return DriverPeteServerInstance.getInstance(token, timeoutSeconds);
     }
 
+    public void deleteAllEndpoints() {
+        this.serverAPI().deleteAllEndpoints(new Callback<Response>() {
+            @Override
+            public void success(Response response, Response response2) {
+                MainActivity.this.refreshData();
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Delete endpoints error", error.getMessage());
+            }
+        });
+    }
+
+    public void reprocessAllEndpoints() {
+        this.serverAPI().deleteAllEndpoints(new Callback<Response>() {
+            @Override
+            public void success(Response response, Response response2) {
+                MainActivity.this.serverAPI().reprocessAllUserData(false, new Callback<Response>() {
+                    @Override
+                    public void success(Response returnResponse, Response response) {
+                        MainActivity.this.refreshData();
+                    }
+
+                    @Override
+                    public void failure(RetrofitError error) {
+                        MainActivity.this.showAlert("Processing endpoints error", error.getMessage());
+                    }
+                });
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                MainActivity.this.showAlert("Delete endpoints error", error.getMessage());
+            }
+        });
+    }
+
     public void reprocessAllRoutes() {
         this.serverAPI().deleteAllRoutes(new Callback<Response>() {
             @Override
             public void success(Response response, Response response2) {
-                MainActivity.this.serverAPI().reprocessAllUserData(new Callback<Response>() {
+                MainActivity.this.serverAPI().reprocessAllUserData(true, new Callback<Response>() {
                     @Override
                     public void success(Response returnResponse, Response response) {
                         MainActivity.this.refreshData();
@@ -498,32 +549,6 @@ public class MainActivity extends ActionBarActivity implements
                 MainActivity.this.showAlert("Delete routes error", error.getMessage());
             }
         });
-    }
-
-    public void reprocessAllData() {
-        this.serverAPI().deleteProcessedUserData(new Callback<Response>() {
-            @Override
-            public void success(Response response, Response response2) {
-                MainActivity.this.serverAPI().reprocessAllUserData(new Callback<Response>() {
-                    @Override
-                    public void success(Response returnResponse, Response response) {
-                        MainActivity.this.showAlert("Processing is done", "Everything is fine");
-                        MainActivity.this.refreshData();
-                    }
-
-                    @Override
-                    public void failure(RetrofitError error) {
-                        MainActivity.this.showAlert("Processing error", error.getMessage());
-                    }
-                });
-            }
-
-            @Override
-            public void failure(RetrofitError error) {
-                MainActivity.this.showAlert("Delete endpoints error", error.getMessage());
-            }
-        });
-
     }
 
     private void showAlert(String title, String message) {
@@ -554,13 +579,7 @@ public class MainActivity extends ActionBarActivity implements
                     MainActivity.this.endpointB = null;
                 }
 
-                MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
-                        R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
-                MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
-                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
-
-                // now endpoints are loaded, we can refresh routes
-                MainActivity.this.refreshRoutes();
+                MainActivity.this.updateEndpointsAndRoutesGui();
             }
 
             @Override
@@ -568,15 +587,12 @@ public class MainActivity extends ActionBarActivity implements
                 MainActivity.this.showAlert("Failed to get endpoints", error.getMessage());
                 MainActivity.this.endpointA = null;
                 MainActivity.this.endpointB = null;
-                MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
-                        R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
-                MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
-                        R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+                updateEndpointsAndRoutesGui();
             }
         });
     }
 
-    private void updateEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId) {
+    private void updateSingleEndpointGui(TrajectoryEndpoint endpoint, int labelTextId, int addressTextId, int editButtonId) {
         TextView labelText = ((TextView) findViewById(labelTextId));
         TextView addressText = ((TextView) findViewById(addressTextId));
         Button button = ((Button) findViewById(editButtonId));
@@ -585,11 +601,36 @@ public class MainActivity extends ActionBarActivity implements
             addressText.setText(endpoint.getAddress());
             addressText.setVisibility(View.VISIBLE);
             button.setVisibility(View.VISIBLE);
+            labelText.setVisibility(View.VISIBLE);
         } else {
             addressText.setVisibility(View.INVISIBLE);
             button.setVisibility(View.INVISIBLE);
-            labelText.setText("<NO ENDPOINT LOCATION FOUND>");
+            labelText.setVisibility(View.INVISIBLE);
         }
+    }
+
+    private void updateEndpointsAndRoutesGui() {
+        MainActivity.this.updateSingleEndpointGui(this.endpointA,
+                R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
+        MainActivity.this.updateSingleEndpointGui(this.endpointB,
+                R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
+
+        findViewById(R.id.endpointSplitterView).setVisibility(View.VISIBLE);
+        if (this.endpointA == null) {
+            findViewById(R.id.notReadyTextView).setVisibility(View.VISIBLE);
+            if (this.endpointB == null) {
+                ((TextView) findViewById(R.id.notReadyTextView)).setText(this.NO_ENDPOINTS_MESSAGE);
+                findViewById(R.id.endpointSplitterView).setVisibility(View.INVISIBLE);
+            } else {
+                ((TextView) findViewById(R.id.notReadyTextView)).setText(this.SINGLE_ENDPOINT_ONLY_MESSAGE);
+            }
+            MainActivity.this.updateRoutesGui(new ArrayList<Route>(), new ArrayList<Route>());
+        } else {
+            // now endpoints are loaded, we can refresh routes
+            ((TextView) findViewById(R.id.notReadyTextView)).setText("Loading routes..");
+            MainActivity.this.refreshRoutes();
+        }
+
     }
 
     public void editAEndpoint(View view) {
@@ -615,7 +656,6 @@ public class MainActivity extends ActionBarActivity implements
         existingEndpoint.setLabel(proposedEndpoint.getLabel());
         existingEndpoint.setAddress(proposedEndpoint.getAddress());
 
-
         float[] distances = {0.f};
         Location.distanceBetween(
                 existingEndpoint.getLatitude(), existingEndpoint.getLongitude(),
@@ -628,10 +668,10 @@ public class MainActivity extends ActionBarActivity implements
         existingEndpoint.setLongitude(proposedEndpoint.getLongitude());
 
         if (isLocationA) {
-            MainActivity.this.updateEndpointGui(MainActivity.this.endpointA,
+            MainActivity.this.updateSingleEndpointGui(MainActivity.this.endpointA,
                     R.id.locationALabelText, R.id.locationAAddress, R.id.editAButton);
         } else {
-            MainActivity.this.updateEndpointGui(MainActivity.this.endpointB,
+            MainActivity.this.updateSingleEndpointGui(MainActivity.this.endpointB,
                     R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
         }
 
@@ -680,7 +720,6 @@ public class MainActivity extends ActionBarActivity implements
 
 
     private void refreshRoutes() {
-
         this.serverAPI().routes(true, new Callback<List<Route>>() {
             @Override
             public void success(final List<Route> routesAtoB, Response response) {
@@ -688,7 +727,6 @@ public class MainActivity extends ActionBarActivity implements
                 MainActivity.this.serverAPI().routes(false, new Callback<List<Route>>() {
                     @Override
                     public void success(List<Route> routesBtoA, Response response) {
-
                         MainActivity.this.updateRoutesGui(routesAtoB, routesBtoA);
                     }
                     @Override
@@ -708,7 +746,7 @@ public class MainActivity extends ActionBarActivity implements
     private void updateRoutesGui(List<Route> routesAtoB, List<Route> routesBtoA) {
 
         boolean routesFound = (routesAtoB.size() > 0 || routesBtoA.size() > 0);
-        findViewById(R.id.noRoutesFoundTextView).setVisibility(!routesFound? View.VISIBLE:View.INVISIBLE);
+        findViewById(R.id.notReadyTextView).setVisibility(!routesFound? View.VISIBLE:View.INVISIBLE);
         findViewById(R.id.routesRadioLayout).setVisibility(routesFound ? View.VISIBLE : View.INVISIBLE);
 
         RadioGroup routesRadioGroup = (RadioGroup) findViewById(R.id.routesRadioGroup);
@@ -716,6 +754,9 @@ public class MainActivity extends ActionBarActivity implements
             // uncheck radio group to be able to determine the state whether routes
             // just appeared or they existed and there is no need to change check state
             routesRadioGroup.check(-1);
+            if (this.endpointA != null && this.endpointB != null) {
+                ((TextView) findViewById(R.id.notReadyTextView)).setText(this.NO_ROUTES_MESSAGE);
+            }
             return;
         }
 
@@ -729,9 +770,9 @@ public class MainActivity extends ActionBarActivity implements
         routesBtoAListView.setAdapter(new RouteArrayAdapter(this, routesBtoA));
 
         ((RadioButton)findViewById(R.id.routeRadioAtoB)).setText(
-                this.endpointA.getLabel()+" to " + this.endpointB.getLabel());
+                this.endpointA.getLabel() + " to " + this.endpointB.getLabel());
         ((RadioButton)findViewById(R.id.routeRadioBtoA)).setText(
-                this.endpointB.getLabel()+" to " + this.endpointA.getLabel());
+                this.endpointB.getLabel() + " to " + this.endpointA.getLabel());
 
         if (routesRadioGroup.getCheckedRadioButtonId() == -1) {
             if (routesAtoB.size() > 0) {

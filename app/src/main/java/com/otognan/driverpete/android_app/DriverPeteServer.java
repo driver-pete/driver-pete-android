@@ -44,5 +44,5 @@ public interface DriverPeteServer {
     public void deleteAllRoutes(Callback<Response> callback);
 
     @GET("/api/trajectory/reprocess/all")
-    public void reprocessAllUserData(Callback<Response> callback);
+    public void reprocessAllUserData(@Query("reprocessRoutes") boolean reprocessRoutes, Callback<Response> callback);
 }
