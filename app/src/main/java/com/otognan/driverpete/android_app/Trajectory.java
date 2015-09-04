@@ -25,7 +25,7 @@ public class Trajectory {
     }
 
     public static String locationToString(Location location) {
-        return String.format("%s %f %f",
+        return String.format(Locale.US, "%s %f %f",
                 new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss_z", Locale.US).format(location.getTime()),
                 location.getLatitude(),
                 location.getLongitude());
@@ -36,7 +36,7 @@ public class Trajectory {
 
         Location result = new Location((String)null);
 
-        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss_z");
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss_z", Locale.US);
         Date date = formatter.parse(parts[0]);
         result.setTime(date.getTime());
         result.setLatitude(Double.parseDouble(parts[1]));
@@ -45,7 +45,7 @@ public class Trajectory {
     }
 
     public static String locationToShortString(Location location) {
-        return String.format("%s %f %f",
+        return String.format(Locale.US, "%s %f %f",
                 new SimpleDateFormat("HH-mm-ss", Locale.US).format(location.getTime()),
                 location.getLatitude(),
                 location.getLongitude());
