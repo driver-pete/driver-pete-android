@@ -1,4 +1,4 @@
-package com.otognan.driverpete.android;
+package com.otognan.driverpete.android_app;
 import android.content.Context;
 import android.util.Log;
 import java.io.BufferedInputStream;

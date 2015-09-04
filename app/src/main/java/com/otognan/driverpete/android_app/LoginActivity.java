@@ -1,4 +1,4 @@
-package com.otognan.driverpete.android;
+package com.otognan.driverpete.android_app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -8,15 +8,11 @@ import android.net.http.SslError;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
-import com.otognan.driverpete.android.R;
 
 import java.net.HttpCookie;
 import java.util.List;
