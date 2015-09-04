@@ -2,13 +2,15 @@ package com.otognan.driverpete.android_app;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
+
+import java.io.BufferedReader;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 
 public class CompressTest {
-
 
     @Test
     public void testBinaryCompression() throws Exception {
@@ -23,8 +25,14 @@ public class CompressTest {
                 +"jbujsbjvugsduddbdj";
 
         byte[] compressed = Compress.compress(string);
-        String decompressed = Compress.decompress(compressed);
-        assertThat(string, CoreMatchers.equalTo(decompressed));
+        BufferedReader decompressedReader = Compress.decompress(compressed);
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = decompressedReader.readLine()) != null) {
+            sb.append(line);
+        }
+        decompressedReader.close();
+        assertThat(string, CoreMatchers.equalTo(sb.toString()));
     }
 
 }
