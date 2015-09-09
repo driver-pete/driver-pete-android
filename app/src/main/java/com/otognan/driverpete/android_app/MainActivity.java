@@ -619,9 +619,9 @@ public class MainActivity extends ActionBarActivity implements
                 R.id.locationBLabelText, R.id.locationBAddress, R.id.editBButton);
 
         findViewById(R.id.endpointSplitterView).setVisibility(View.VISIBLE);
-        if (this.endpointA == null) {
+        if (this.endpointB == null) {
             findViewById(R.id.notReadyTextView).setVisibility(View.VISIBLE);
-            if (this.endpointB == null) {
+            if (this.endpointA == null) {
                 ((TextView) findViewById(R.id.notReadyTextView)).setText(this.NO_ENDPOINTS_MESSAGE);
                 findViewById(R.id.endpointSplitterView).setVisibility(View.INVISIBLE);
             } else {
