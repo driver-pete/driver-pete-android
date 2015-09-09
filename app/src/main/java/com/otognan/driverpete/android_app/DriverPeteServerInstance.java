@@ -12,7 +12,7 @@ import retrofit.client.OkClient;
 public class DriverPeteServerInstance {
 
     //public static final String serverUrl = "https://192.168.1.2:8443";
-    public static final String serverUrl = "https://driverpete.elasticbeanstalk.com";
+    public static final String serverUrl = "https://driverpete.com";
 
     public static DriverPeteServer getInstance(final String token, int timeoutSeconds) {
         RequestInterceptor requestInterceptor = new RequestInterceptor() {
