@@ -95,9 +95,11 @@ public class MainActivity extends ActionBarActivity implements
     private static final int ROUTE_DETAILS_ACTIVITY_RESULT_ID = 4;
 
     // Define an object that holds accuracy and frequency parameters
-    private GoogleApiClient mGoogleApiClient;
+    private GoogleApiClient googleApiClient;
 
     private Trajectory currentTrajectory = new Trajectory();
+    private Location lastIgnoredLocation;
+
 
     private int stationaryLocationsCounter = 0;
     // switch to sleep mode after this number of stationary locations received
@@ -132,14 +134,14 @@ public class MainActivity extends ActionBarActivity implements
 
         this.updateLoginStatus();
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
+        googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
 
         this.screenLog("Connecting to google api..\n");
-        mGoogleApiClient.connect();
+        googleApiClient.connect();
 
         final Handler timerHandler = new Handler();
         class TimerRunnable implements Runnable {
@@ -289,6 +291,7 @@ public class MainActivity extends ActionBarActivity implements
             Location lastLocaton = this.currentTrajectory.lastLocation();
             if (lastLocaton.distanceTo(location) < locationDistanceThreshold) {
                 Log.d(LOG_TAG, Trajectory.locationToShortString(location) + " is ignored");
+                this.lastIgnoredLocation = location;
                 if (!this.isInSleepMode) {
                     this.stationaryLocationsCounter += 1;
                     Log.d(LOG_TAG, "Stationary counter: " + this.stationaryLocationsCounter);
@@ -313,9 +316,15 @@ public class MainActivity extends ActionBarActivity implements
             if (this.isInSleepMode) {
                 this.subscribeToLocations(false);
             }
-            this.screenLog(Trajectory.locationToShortString(location) + "\n");
-            this.currentTrajectory.addLocation(location);
         }
+
+        if (this.lastIgnoredLocation != null) {
+            this.screenLog("Adding last ignored location: " + Trajectory.locationToShortString(this.lastIgnoredLocation) + "\n");
+            this.currentTrajectory.addLocation(this.lastIgnoredLocation);
+            this.lastIgnoredLocation = null;
+        }
+        this.screenLog(Trajectory.locationToShortString(location) + "\n");
+        this.currentTrajectory.addLocation(location);
     }
 
     public void sendToServer() throws Exception {
@@ -371,7 +380,7 @@ public class MainActivity extends ActionBarActivity implements
             return;
         }
         this.isInSleepMode = sleepMode;
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+        LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
 
         if (sleepMode) {
             this.screenLog("Subscribing to locations in sleep mode\n");
@@ -398,7 +407,7 @@ public class MainActivity extends ActionBarActivity implements
             locationRequest.setFastestInterval(FASTEST_INTERVAL);
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(
-                mGoogleApiClient, locationRequest, this);
+                googleApiClient, locationRequest, this);
     }
 
     @Override
