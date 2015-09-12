@@ -286,7 +286,6 @@ public class MainActivity extends ActionBarActivity implements
     @Override
     public void onLocationChanged(Location location) {
         Log.d(LOG_TAG, "Received location: " + Trajectory.locationToString(location));
-        this.screenLog(Trajectory.locationToShortString(location) + "\n");
         if (this.currentTrajectory.size() > 0) {
             Location lastLocaton = this.currentTrajectory.lastLocation();
             if (lastLocaton.distanceTo(location) < locationDistanceThreshold) {
