@@ -31,15 +31,24 @@
         </activity>
         <activity
             android:name=".LoginActivity"
-            android:label="@string/title_activity_login" >
+            android:label="@string/title_activity_login"
+            android:screenOrientation="portrait">
         </activity>
         <activity
             android:name=".EndpointEditorActivity"
-            android:label="@string/title_activity_endpoint_editor" >
+            android:label="@string/title_activity_endpoint_editor"
+            android:screenOrientation="portrait">
         </activity>
         <activity
             android:name=".LogActivity"
-            android:label="@string/title_activity_log" >
+            android:label="@string/title_activity_log"
+            android:screenOrientation="portrait">
+        </activity>
+
+        <activity
+            android:name=".RouteDetailsActivity"
+            android:label="@string/title_activity_route_details"
+            android:screenOrientation="portrait">
         </activity>
 
         <service
@@ -47,11 +56,6 @@
             android:enabled="true"
             android:exported="false" >
         </service>
-
-        <activity
-            android:name=".RouteDetailsActivity"
-            android:label="@string/title_activity_route_details" >
-        </activity>
 
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
